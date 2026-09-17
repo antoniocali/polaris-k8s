@@ -1,0 +1,38 @@
+# Apache Polaris for the local-dev harness.
+#
+# In-memory metastore, auto-bootstrapped with the root credentials below — no
+# database, no S3/MinIO. FILE storage (PolarisCatalog storageType=FILE) is used
+# so the data plane (catalogs/namespaces/tables) works without a cloud backend.
+#
+# Matches the upstream 1.4.1 quickstart: API on 8181, health/metrics on 8182,
+# token endpoint /api/catalog/v1/oauth/tokens, scope PRINCIPAL_ROLE:ALL.
+#
+# The last three properties are LOCAL/INSECURE ONLY — Polaris ships with FILE
+# disabled and the production-readiness gate aborts startup on it. They are the
+# exact knobs Polaris documents for testing; never set them on a real server:
+#   - SUPPORTED_CATALOG_STORAGE_TYPES: add FILE to the allow-list
+#   - ALLOW_INSECURE_STORAGE_TYPES:    permit the HadoopFileIO behind FILE
+#   - readiness.ignore-severe-issues:  don't abort startup on the FILE warning
+name: polaris-k8s-local
+
+services:
+  polaris:
+    image: apache/polaris:latest # pin to a release digest/tag for reproducibility if needed
+    container_name: polaris-k8s-local
+    ports:
+      - "8181:8181" # Iceberg REST + management API
+      - "8182:8182" # health checks + metrics
+    environment:
+      # realm,clientId,clientSecret — these become the operator's credentials.
+      - POLARIS_BOOTSTRAP_CREDENTIALS=POLARIS,root,s3cr3t
+      - polaris.realm-context.realms=POLARIS
+      - quarkus.otel.sdk.disabled=true
+      - 'polaris.features."SUPPORTED_CATALOG_STORAGE_TYPES"=["S3","GCS","AZURE","FILE"]'
+      - 'polaris.features."ALLOW_INSECURE_STORAGE_TYPES"=true'
+      - polaris.readiness.ignore-severe-issues=true
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8182/q/health"]
+      interval: 2s
+      timeout: 10s
+      retries: 30
+      start_period: 10s

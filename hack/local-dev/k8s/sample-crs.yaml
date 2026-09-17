@@ -1,0 +1,93 @@
+# A full slice of the Polaris object graph, reconciled against the local server.
+# The FILE-backed catalog is what makes this work with no S3/MinIO.
+#
+# Watch it settle with:
+#   kubectl -n polaris-dev get polaris
+#   kubectl -n polaris-dev get polarisconnection local -o jsonpath='{.status.conditions}' | jq
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisCatalog
+metadata:
+  name: lakehouse
+  namespace: polaris-dev
+spec:
+  connectionRef:
+    name: local
+  type: INTERNAL
+  defaultBaseLocation: file:///tmp/polaris/lakehouse
+  storageConfig:
+    storageType: FILE
+    allowedLocations:
+      - file:///tmp/polaris/lakehouse
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisNamespace
+metadata:
+  name: analytics
+  namespace: polaris-dev
+spec:
+  catalogRef:
+    name: lakehouse
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisPrincipal
+metadata:
+  name: airflow
+  namespace: polaris-dev
+spec:
+  connectionRef:
+    name: local
+  credentialsSecretRef:
+    name: airflow-polaris-creds # operator creates + owns this Secret
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisPrincipalRole
+metadata:
+  name: analytics-writer
+  namespace: polaris-dev
+spec:
+  connectionRef:
+    name: local
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisCatalogRole
+metadata:
+  name: lakehouse-rw
+  namespace: polaris-dev
+spec:
+  catalogRef:
+    name: lakehouse
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisGrant
+metadata:
+  name: lakehouse-manage
+  namespace: polaris-dev
+spec:
+  catalogRoleRef:
+    name: lakehouse-rw
+  privilege: CATALOG_MANAGE_CONTENT
+  target:
+    type: catalog
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisCatalogRoleBinding
+metadata:
+  name: writer-to-lakehouse-rw
+  namespace: polaris-dev
+spec:
+  principalRoleRef:
+    name: analytics-writer
+  catalogRoleRef:
+    name: lakehouse-rw
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisPrincipalRoleBinding
+metadata:
+  name: airflow-to-writer
+  namespace: polaris-dev
+spec:
+  principalRef:
+    name: airflow
+  principalRoleRef:
+    name: analytics-writer

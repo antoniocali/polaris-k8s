@@ -1,0 +1,11 @@
+# oapi-codegen config for the Polaris management plane.
+# Output is committed under internal/polaris/management/.
+package: management
+output: internal/polaris/management/zz_generated.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  response-type-suffix: Wrapper
+compatibility:
+  always-prefix-enum-values: true

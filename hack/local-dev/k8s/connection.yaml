@@ -1,0 +1,27 @@
+# Namespace + root credentials + the PolarisConnection the operator authenticates with.
+# serverUrl is localhost because the operator runs on the host (see Tiltfile).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: polaris-dev
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: polaris-root-credentials
+  namespace: polaris-dev
+type: Opaque
+stringData:
+  # Matches POLARIS_BOOTSTRAP_CREDENTIALS in docker-compose.yaml.
+  clientId: root
+  clientSecret: s3cr3t
+---
+apiVersion: polaris.k8s.calific.io/v1alpha1
+kind: PolarisConnection
+metadata:
+  name: local
+  namespace: polaris-dev
+spec:
+  serverUrl: http://localhost:8181
+  credentialsSecretRef:
+    name: polaris-root-credentials

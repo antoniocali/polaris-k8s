@@ -1,0 +1,71 @@
+# Tiltfile — local-dev harness for the polaris-k8s operator.
+#
+# Brings up, in one `tilt up`:
+#   - Apache Polaris in Docker (in-memory, FILE storage)   [docker-compose]
+#   - the operator's CRDs in a kind cluster                [make install]
+#   - the operator itself, on the host                     [go run ./cmd/main.go]
+#   - sample CRs (connection + FILE catalog + namespace + principal/roles/grant)
+#
+# The operator runs on the HOST (not in-cluster) on purpose: it can then reach
+# Polaris at http://localhost:8181 directly, and watch kind via KUBECONFIG.
+#
+# Always launch via ./up.sh — it points KUBECONFIG at an isolated kind cluster
+# so nothing here can ever touch a real (prod/staging) context.
+
+HERE = config.main_dir
+REPO = os.path.abspath(os.path.join(HERE, '..', '..'))
+
+# --- Safety rail: only ever run against the isolated kind cluster ---------
+allow_k8s_contexts('kind-polaris-dev')
+if k8s_context() != 'kind-polaris-dev':
+    fail(
+        ("Refusing to run: kube context is %r, expected 'kind-polaris-dev'.\n" +
+         "Start this harness with hack/local-dev/up.sh (it isolates KUBECONFIG).")
+        % k8s_context()
+    )
+
+# --- Apache Polaris (in-memory, auto-bootstrapped, FILE storage) ----------
+docker_compose(os.path.join(HERE, 'docker-compose.yaml'))
+dc_resource('polaris', labels=['polaris'])
+
+# --- CRDs into the kind cluster -------------------------------------------
+local_resource(
+    'crds',
+    cmd='make -C %s manifests install' % REPO,
+    # Watch ONLY the API types (the input). `make manifests` regenerates
+    # config/crd/, so watching that output here would self-trigger an endless
+    # regenerate→apply loop.
+    deps=[os.path.join(REPO, 'api')],
+    labels=['operator'],
+)
+
+# --- Operator on the host (reaches Polaris at localhost:8181) -------------
+# `go run` instead of `make run` keeps restarts snappy (no codegen/vet per edit).
+# KUBECONFIG is inherited from up.sh, so this watches the kind cluster.
+# Metrics + health servers are disabled (=0) — they're not needed locally and a
+# fixed port would collide with a stale/orphaned operator on restart.
+local_resource(
+    'operator',
+    serve_cmd='go run ./cmd/main.go --metrics-bind-address=0 --health-probe-bind-address=0',
+    serve_dir=REPO,
+    resource_deps=['crds', 'polaris'],
+    deps=[
+        os.path.join(REPO, 'api'),
+        os.path.join(REPO, 'internal'),
+        os.path.join(REPO, 'cmd'),
+    ],
+    labels=['operator'],
+)
+
+# --- Sample CRs ------------------------------------------------------------
+# Applied with kubectl (rather than k8s_yaml) so Tilt doesn't try to own custom
+# resources whose CRDs are installed out-of-band by the 'crds' step.
+local_resource(
+    'sample-crs',
+    cmd='kubectl apply -f %s -f %s' % (
+        os.path.join(HERE, 'k8s', 'connection.yaml'),
+        os.path.join(HERE, 'k8s', 'sample-crs.yaml'),
+    ),
+    resource_deps=['operator'],
+    labels=['samples'],
+)

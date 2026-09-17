@@ -1,0 +1,18 @@
+# oapi-codegen config for the Polaris catalog / Iceberg REST plane.
+# Output is committed under internal/polaris/catalog/.
+#
+# The Generic Table API is for non-Iceberg formats (Delta, CSV). We don't
+# model those in v1alpha1, and the schemas there collide on Go type names
+# ("GenericTable" appears in both schemas and response wrappers). We
+# exclude that tag and its schemas via CLI flags in the Makefile target.
+package: catalog
+output: internal/polaris/catalog/zz_generated.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  # Catalog spec defines both a schema and a response wrapper with the same
+  # name (e.g. ListNamespacesResponse) — disambiguate the wrappers.
+  response-type-suffix: Wrapper
+compatibility:
+  always-prefix-enum-values: true
