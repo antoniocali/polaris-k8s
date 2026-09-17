@@ -1,0 +1,21 @@
+name: Feature request
+description: A new CRD field, kind, or capability
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: capability
+    attributes:
+      label: What Polaris-side capability are you trying to model?
+      description: Link to the relevant Polaris REST API operation/field if applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed CRD/field shape
+      description: Sketch the CRD field(s) or new kind you have in mind.
+      render: yaml
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

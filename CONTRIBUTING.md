@@ -137,7 +137,7 @@ Both are wired into `make test` and `make build`, so CI will fail if you forget.
 
 ## Reporting security issues
 
-Don't open public GitHub Issues for security problems. Email antoniodavidecali@gmail.com directly, or use GitHub's private vulnerability reporting (Security tab) if enabled; PII-handling code paths are especially sensitive (Polaris controls access to Iceberg catalogs that include masked-PII tables).
+See [SECURITY.md](SECURITY.md) — don't open a public GitHub Issue for security problems.
 
 ## License
 

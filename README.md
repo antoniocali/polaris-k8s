@@ -1,5 +1,10 @@
 # polaris-k8s
 
+[![CI](https://github.com/antoniocali/polaris-k8s/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniocali/polaris-k8s/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/antoniocali/polaris-k8s)](https://goreportcard.com/report/github.com/antoniocali/polaris-k8s)
+[![Go Reference](https://pkg.go.dev/badge/github.com/antoniocali/polaris-k8s.svg)](https://pkg.go.dev/github.com/antoniocali/polaris-k8s)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
 **A Kubernetes operator that manages [Apache Polaris](https://polaris.apache.org/) (a REST Iceberg catalog) as Infrastructure-as-Code.**
 
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects — so you can manage your Iceberg catalog the same way you manage everything else: with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
