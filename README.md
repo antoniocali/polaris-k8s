@@ -1,7 +1,6 @@
 # polaris-k8s
 
 [![CI](https://github.com/antoniocali/polaris-k8s/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniocali/polaris-k8s/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/antoniocali/polaris-k8s)](https://goreportcard.com/report/github.com/antoniocali/polaris-k8s)
 [![Go Reference](https://pkg.go.dev/badge/github.com/antoniocali/polaris-k8s.svg)](https://pkg.go.dev/github.com/antoniocali/polaris-k8s)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
