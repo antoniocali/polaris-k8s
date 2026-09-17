@@ -240,15 +240,13 @@ func buildPartitionSpec(ps polarisv1alpha1.IcebergPartitionSpec) catalog.Partiti
 	for _, f := range ps.Fields {
 		out.Fields = append(out.Fields, catalog.PartitionField{
 			SourceId:  int(f.SourceID),
-			FieldId:   intPtr(int(f.FieldID)),
+			FieldId:   new(int(f.FieldID)),
 			Name:      f.Name,
 			Transform: f.Transform,
 		})
 	}
 	return out
 }
-
-func intPtr(v int) *int { return &v }
 
 // resolveFail handles a pre-deletion-check resolution error (ref lookup or
 // client build). On the delete path the remote is unreachable, so we drop the
