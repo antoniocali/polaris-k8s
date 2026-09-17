@@ -47,6 +47,7 @@ const metricsRoleBindingName = "polaris-k8s-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
+	var polarisIP string
 
 	// Before running the tests, set up the environment by creating the namespace,
 	// enforce the restricted security policy to the namespace, installing CRDs,
@@ -72,11 +73,17 @@ var _ = Describe("Manager", Ordered, func() {
 		cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", managerImage))
 		_, err = utils.Run(cmd)
 		Expect(err).NotTo(HaveOccurred(), "Failed to deploy the controller-manager")
+
+		By("starting a real Polaris server for the object-graph scenario")
+		polarisIP, err = startPolarisForE2E()
+		Expect(err).NotTo(HaveOccurred(), "Failed to start Polaris")
 	})
 
 	// After all tests have been executed, clean up by undeploying the controller, uninstalling CRDs,
 	// and deleting the namespace.
 	AfterAll(func() {
+		stopPolarisForE2E()
+
 		By("cleaning up the curl pod for metrics")
 		cmd := exec.Command("kubectl", "delete", "pod", "curl-metrics", "-n", namespace)
 		_, _ = utils.Run(cmd)
@@ -270,15 +277,36 @@ var _ = Describe("Manager", Ordered, func() {
 
 		// +kubebuilder:scaffold:e2e-webhooks-checks
 
-		// TODO: Customize the e2e test suite with scenarios specific to your project.
-		// Consider applying sample/CR(s) and check their status and/or verifying
-		// the reconciliation by using the metrics, i.e.:
-		// metricsOutput, err := getMetricsOutput()
-		// Expect(err).NotTo(HaveOccurred(), "Failed to retrieve logs from curl pod")
-		// Expect(metricsOutput).To(ContainSubstring(
-		//    fmt.Sprintf(`controller_runtime_reconcile_total{controller="%s",result="success"} 1`,
-		//    strings.ToLower(<Kind>),
-		// ))
+		It("should reconcile a full Polaris object graph to Ready against a real server", func() {
+			By("applying the object graph (Connection, Catalog, Namespace, Table, View, " +
+				"Principal, PrincipalRole, CatalogRole, both bindings, and a Grant)")
+			manifestPath, err := applyPolarisObjectGraph(polarisIP)
+			Expect(err).NotTo(HaveOccurred(), "Failed to build the object graph manifest")
+			_, err = utils.Run(exec.Command("kubectl", "apply", "-f", manifestPath))
+			Expect(err).NotTo(HaveOccurred(), "Failed to apply the object graph")
+
+			By("waiting for every object to reach Ready=True")
+			waitForReady("polarisconnection", "local", polarisDevNamespace)
+			waitForReady("polariscatalog", "lakehouse", polarisDevNamespace)
+			waitForReady("polarisnamespace", "analytics", polarisDevNamespace)
+			waitForReady("polaristable", "orders", polarisDevNamespace)
+			waitForReady("polarisview", "orders-summary", polarisDevNamespace)
+			waitForReady("polarisprincipal", "airflow", polarisDevNamespace)
+			waitForReady("polarisprincipalrole", "analytics-writer", polarisDevNamespace)
+			waitForReady("polariscatalogrole", "lakehouse-rw", polarisDevNamespace)
+			waitForReady("polariscatalogrolebinding", "writer-to-lakehouse-rw", polarisDevNamespace)
+			waitForReady("polarisprincipalrolebinding", "airflow-to-writer", polarisDevNamespace)
+			waitForReady("polarisgrant", "lakehouse-manage", polarisDevNamespace)
+
+			By("deleting the namespace and confirming cascade cleanup")
+			_, err = utils.Run(exec.Command("kubectl", "delete", "ns", polarisDevNamespace, "--timeout=2m"))
+			Expect(err).NotTo(HaveOccurred(), "Failed to delete the polaris-dev namespace")
+
+			Eventually(func(g Gomega) {
+				out, err := utils.Run(exec.Command("kubectl", "get", "ns", polarisDevNamespace))
+				g.Expect(err).To(HaveOccurred(), "namespace still present: %s", out)
+			}, 2*time.Minute, 2*time.Second).Should(Succeed())
+		})
 	})
 })
 

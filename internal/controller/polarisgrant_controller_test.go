@@ -17,68 +17,140 @@ limitations under the License.
 package controller
 
 import (
-	"context"
+	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	polarisv1alpha1 "github.com/antoniocali/polaris-k8s/api/v1alpha1"
 )
 
-var _ = PDescribe("PolarisGrant Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+// These specs use the simplest discriminated-union target (catalog-level —
+// see buildGrantBody in polarisgrant_controller.go, which returns early for
+// GrantTargetCatalog without needing a namespace/table/view ref). The
+// namespace-target path is already exercised in
+// TestPolarisGrantReconcile_NamespaceTarget (bindings_grant_unit_test.go);
+// this suite's job is proving the real API server integration, not
+// re-covering every target-type branch.
+var _ = Describe("PolarisGrant Controller", func() {
+	const testNamespace = "polarisgrant-test"
 
-		ctx := context.Background()
+	BeforeEach(func() {
+		Expect(ensureNamespace(ctx, k8sClient, testNamespace)).To(Succeed())
+	})
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+	// makeReadyParents creates a Ready Connection, Catalog and CatalogRole in
+	// the real API server.
+	makeReadyParents := func(suffix string) {
+		conn := makeConnection("prod-"+suffix, testNamespace)
+		secret := makeCredentialsSecret("prod-"+suffix, testNamespace)
+		Expect(k8sClient.Create(ctx, secret)).To(Succeed())
+		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
+		conn.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, conn)).To(Succeed())
+
+		cat := makeCatalog("lakehouse-"+suffix, testNamespace, "prod-"+suffix)
+		Expect(k8sClient.Create(ctx, cat)).To(Succeed())
+		cat.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, cat)).To(Succeed())
+
+		cr := &polarisv1alpha1.PolarisCatalogRole{
+			ObjectMeta: metav1.ObjectMeta{Name: "rw-" + suffix, Namespace: testNamespace},
+			Spec: polarisv1alpha1.PolarisCatalogRoleSpec{
+				CatalogRef: polarisv1alpha1.CatalogRef{Name: "lakehouse-" + suffix},
+				Name:       "rw-" + suffix,
+			},
 		}
-		polarisgrant := &polarisv1alpha1.PolarisGrant{}
+		Expect(k8sClient.Create(ctx, cr)).To(Succeed())
+		cr.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, cr)).To(Succeed())
+	}
 
-		BeforeEach(func() {
-			By("creating the custom resource for the Kind PolarisGrant")
-			err := k8sClient.Get(ctx, typeNamespacedName, polarisgrant)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &polarisv1alpha1.PolarisGrant{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+	Context("When reconciling a catalog-target grant", func() {
+		const suffix = "healthy"
+		resourceName := "rw-catalog-" + suffix
+		nn := types.NamespacedName{Name: resourceName, Namespace: testNamespace}
+
+		It("reaches Ready=True and PUTs the grant", func() {
+			makeReadyParents(suffix)
+
+			grant := &polarisv1alpha1.PolarisGrant{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: testNamespace},
+				Spec: polarisv1alpha1.PolarisGrantSpec{
+					CatalogRoleRef: polarisv1alpha1.CatalogRoleRef{Name: "rw-" + suffix},
+					Privilege:      polarisv1alpha1.Privilege("CATALOG_MANAGE_CONTENT"),
+					Target:         polarisv1alpha1.GrantTarget{Type: polarisv1alpha1.GrantTargetCatalog},
+				},
 			}
-		})
+			Expect(k8sClient.Create(ctx, grant)).To(Succeed())
 
-		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &polarisv1alpha1.PolarisGrant{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			fp := newFakePolaris(GinkgoT())
+			fp.reply("PUT", "/api/management/v1/catalogs/lakehouse-"+suffix+"/catalog-roles/rw-"+suffix+"/grants",
+				http.StatusNoContent, nil)
+
+			r := &PolarisGrantReconciler{
+				Client:             k8sClient,
+				Scheme:             k8sClient.Scheme(),
+				BuildPolarisClient: fakeBuilder(GinkgoT(), fp),
+			}
+			_, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance PolarisGrant")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			got := &polarisv1alpha1.PolarisGrant{}
+			Expect(k8sClient.Get(ctx, nn, got)).To(Succeed())
+			Expect(gotCondition(got.Status.Conditions, ConditionReady, metav1.ConditionTrue)).
+				To(BeTrue(), dumpConditions(got.Status.Conditions))
 		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &PolarisGrantReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
+	})
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
+	Context("When deleting a grant", func() {
+		const suffix = "delete"
+		resourceName := "rw-catalog-" + suffix
+		nn := types.NamespacedName{Name: resourceName, Namespace: testNamespace}
+
+		It("revokes the grant and removes the finalizer", func() {
+			makeReadyParents(suffix)
+
+			grant := &polarisv1alpha1.PolarisGrant{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: testNamespace},
+				Spec: polarisv1alpha1.PolarisGrantSpec{
+					CatalogRoleRef: polarisv1alpha1.CatalogRoleRef{Name: "rw-" + suffix},
+					Privilege:      polarisv1alpha1.Privilege("CATALOG_MANAGE_CONTENT"),
+					Target:         polarisv1alpha1.GrantTarget{Type: polarisv1alpha1.GrantTargetCatalog},
+				},
+			}
+			Expect(k8sClient.Create(ctx, grant)).To(Succeed())
+
+			fp := newFakePolaris(GinkgoT())
+			fp.reply("PUT", "/api/management/v1/catalogs/lakehouse-"+suffix+"/catalog-roles/rw-"+suffix+"/grants",
+				http.StatusNoContent, nil)
+			fp.reply("POST", "/api/management/v1/catalogs/lakehouse-"+suffix+"/catalog-roles/rw-"+suffix+"/grants",
+				http.StatusNoContent, nil)
+
+			r := &PolarisGrantReconciler{
+				Client:             k8sClient,
+				Scheme:             k8sClient.Scheme(),
+				BuildPolarisClient: fakeBuilder(GinkgoT(), fp),
+			}
+			_, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
 			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(k8sClient.Delete(ctx, grant)).To(Succeed())
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &polarisv1alpha1.PolarisGrant{}
+			err = k8sClient.Get(ctx, nn, got)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue(), "expected NotFound, got: %v", err)
 		})
 	})
 })

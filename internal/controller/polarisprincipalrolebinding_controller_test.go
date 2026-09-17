@@ -17,68 +17,135 @@ limitations under the License.
 package controller
 
 import (
-	"context"
+	"net/http"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	polarisv1alpha1 "github.com/antoniocali/polaris-k8s/api/v1alpha1"
 )
 
-var _ = PDescribe("PolarisPrincipalRoleBinding Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+// These specs mirror TestPolarisPrincipalRoleBindingReconcile_PutsAssignment in
+// bindings_grant_unit_test.go, but drive the reconciler against the real
+// envtest API server instead of the fake client.
+var _ = Describe("PolarisPrincipalRoleBinding Controller", func() {
+	const testNamespace = "polarisprincipalrolebinding-test"
 
-		ctx := context.Background()
+	BeforeEach(func() {
+		Expect(ensureNamespace(ctx, k8sClient, testNamespace)).To(Succeed())
+	})
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+	// makeReadyParents creates a Ready Connection, Principal, and
+	// PrincipalRole in the real API server and returns their names.
+	makeReadyParents := func(suffix string) {
+		conn := makeConnection("prod-"+suffix, testNamespace)
+		secret := makeCredentialsSecret("prod-"+suffix, testNamespace)
+		Expect(k8sClient.Create(ctx, secret)).To(Succeed())
+		Expect(k8sClient.Create(ctx, conn)).To(Succeed())
+		conn.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, conn)).To(Succeed())
+
+		principal := &polarisv1alpha1.PolarisPrincipal{
+			ObjectMeta: metav1.ObjectMeta{Name: "airflow-" + suffix, Namespace: testNamespace},
+			Spec: polarisv1alpha1.PolarisPrincipalSpec{
+				ConnectionRef:        polarisv1alpha1.ConnectionRef{Name: "prod-" + suffix},
+				CredentialsSecretRef: polarisv1alpha1.GeneratedCredentialsSecretRef{Name: "airflow-" + suffix + "-creds"},
+			},
 		}
-		polarisprincipalrolebinding := &polarisv1alpha1.PolarisPrincipalRoleBinding{}
+		Expect(k8sClient.Create(ctx, principal)).To(Succeed())
+		principal.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, principal)).To(Succeed())
 
-		BeforeEach(func() {
-			By("creating the custom resource for the Kind PolarisPrincipalRoleBinding")
-			err := k8sClient.Get(ctx, typeNamespacedName, polarisprincipalrolebinding)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &polarisv1alpha1.PolarisPrincipalRoleBinding{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+		role := &polarisv1alpha1.PolarisPrincipalRole{
+			ObjectMeta: metav1.ObjectMeta{Name: "writer-" + suffix, Namespace: testNamespace},
+			Spec:       polarisv1alpha1.PolarisPrincipalRoleSpec{ConnectionRef: polarisv1alpha1.ConnectionRef{Name: "prod-" + suffix}},
+		}
+		Expect(k8sClient.Create(ctx, role)).To(Succeed())
+		role.Status.Conditions = readyConditions()
+		Expect(k8sClient.Status().Update(ctx, role)).To(Succeed())
+	}
+
+	Context("When reconciling a binding", func() {
+		const suffix = "healthy"
+		resourceName := "a-w-" + suffix
+		nn := types.NamespacedName{Name: resourceName, Namespace: testNamespace}
+
+		It("reaches Ready=True and PUTs the assignment", func() {
+			makeReadyParents(suffix)
+
+			binding := &polarisv1alpha1.PolarisPrincipalRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: testNamespace},
+				Spec: polarisv1alpha1.PolarisPrincipalRoleBindingSpec{
+					PrincipalRef:     polarisv1alpha1.PrincipalRef{Name: "airflow-" + suffix},
+					PrincipalRoleRef: polarisv1alpha1.PrincipalRoleRef{Name: "writer-" + suffix},
+				},
 			}
-		})
+			Expect(k8sClient.Create(ctx, binding)).To(Succeed())
 
-		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &polarisv1alpha1.PolarisPrincipalRoleBinding{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			fp := newFakePolaris(GinkgoT())
+			fp.reply("PUT", "/api/management/v1/principals/airflow-"+suffix+"/principal-roles", http.StatusNoContent, nil)
+
+			r := &PolarisPrincipalRoleBindingReconciler{
+				Client:             k8sClient,
+				Scheme:             k8sClient.Scheme(),
+				BuildPolarisClient: fakeBuilder(GinkgoT(), fp),
+			}
+			// First pass adds the finalizer and requeues; second pass PUTs.
+			_, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance PolarisPrincipalRoleBinding")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			got := &polarisv1alpha1.PolarisPrincipalRoleBinding{}
+			Expect(k8sClient.Get(ctx, nn, got)).To(Succeed())
+			Expect(gotCondition(got.Status.Conditions, ConditionReady, metav1.ConditionTrue)).
+				To(BeTrue(), dumpConditions(got.Status.Conditions))
 		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &PolarisPrincipalRoleBindingReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
+	})
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
+	Context("When deleting a binding", func() {
+		const suffix = "delete"
+		resourceName := "a-w-" + suffix
+		nn := types.NamespacedName{Name: resourceName, Namespace: testNamespace}
+
+		It("revokes the assignment and removes the finalizer", func() {
+			makeReadyParents(suffix)
+
+			binding := &polarisv1alpha1.PolarisPrincipalRoleBinding{
+				ObjectMeta: metav1.ObjectMeta{Name: resourceName, Namespace: testNamespace},
+				Spec: polarisv1alpha1.PolarisPrincipalRoleBindingSpec{
+					PrincipalRef:     polarisv1alpha1.PrincipalRef{Name: "airflow-" + suffix},
+					PrincipalRoleRef: polarisv1alpha1.PrincipalRoleRef{Name: "writer-" + suffix},
+				},
+			}
+			Expect(k8sClient.Create(ctx, binding)).To(Succeed())
+
+			fp := newFakePolaris(GinkgoT())
+			fp.reply("PUT", "/api/management/v1/principals/airflow-"+suffix+"/principal-roles", http.StatusNoContent, nil)
+			fp.reply("DELETE", "/api/management/v1/principals/airflow-"+suffix+"/principal-roles/writer-"+suffix, http.StatusNoContent, nil)
+
+			r := &PolarisPrincipalRoleBindingReconciler{
+				Client:             k8sClient,
+				Scheme:             k8sClient.Scheme(),
+				BuildPolarisClient: fakeBuilder(GinkgoT(), fp),
+			}
+			_, err := r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
 			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(k8sClient.Delete(ctx, binding)).To(Succeed())
+			_, err = r.Reconcile(ctx, reconcile.Request{NamespacedName: nn})
+			Expect(err).NotTo(HaveOccurred())
+
+			got := &polarisv1alpha1.PolarisPrincipalRoleBinding{}
+			err = k8sClient.Get(ctx, nn, got)
+			Expect(apierrors.IsNotFound(err)).To(BeTrue(), "expected NotFound, got: %v", err)
 		})
 	})
 })

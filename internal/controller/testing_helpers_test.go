@@ -19,9 +19,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"testing"
 
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -32,10 +32,20 @@ import (
 	"github.com/antoniocali/polaris-k8s/internal/polaris"
 )
 
+// tHelper is the subset of *testing.T (unit tests) and ginkgo.GinkgoT()
+// (envtest Ginkgo specs) these fixtures need. testing.TB itself can't be
+// used here — it has an unexported method that seals it to the standard
+// library's own *testing.T/B/F, which Ginkgo's T-alike can't implement.
+type tHelper interface {
+	Helper()
+	Fatalf(format string, args ...any)
+	Cleanup(func())
+}
+
 // testScheme is shared across all reconciler unit tests. It carries the
 // core/v1 types (for Secret writes), apps if we ever need them, and the
 // polaris-k8s API group.
-func testScheme(t *testing.T) *runtime.Scheme {
+func testScheme(t tHelper) *runtime.Scheme {
 	t.Helper()
 	s := runtime.NewScheme()
 	if err := scheme.AddToScheme(s); err != nil {
@@ -50,7 +60,7 @@ func testScheme(t *testing.T) *runtime.Scheme {
 // newFakeClient builds a controller-runtime fake client with the supplied
 // initial objects and status-subresource enabled for every polaris-k8s kind
 // (the fake client needs an explicit list).
-func newFakeClient(t *testing.T, initObjs ...client.Object) client.Client {
+func newFakeClient(t tHelper, initObjs ...client.Object) client.Client {
 	t.Helper()
 	return fake.NewClientBuilder().
 		WithScheme(testScheme(t)).
@@ -84,7 +94,7 @@ type fakePolaris struct {
 	tokenCalls atomic.Int32
 }
 
-func newFakePolaris(t *testing.T) *fakePolaris {
+func newFakePolaris(t tHelper) *fakePolaris {
 	t.Helper()
 	fp := &fakePolaris{handlers: map[string]http.HandlerFunc{}}
 
@@ -148,7 +158,7 @@ func (fp *fakePolaris) URL() string { return fp.srv.URL }
 
 // newClientForFake returns a *polaris.Client pointed at the fake server,
 // pre-authenticated.
-func newClientForFake(t *testing.T, fp *fakePolaris) *polaris.Client {
+func newClientForFake(t tHelper, fp *fakePolaris) *polaris.Client {
 	t.Helper()
 	c, err := polaris.NewClient(polaris.Config{
 		ServerURL:    fp.URL(),
@@ -164,7 +174,7 @@ func newClientForFake(t *testing.T, fp *fakePolaris) *polaris.Client {
 // fakeBuilder returns a clientBuilderFunc that always yields a client
 // pointed at the given fake server, regardless of which PolarisConnection
 // is passed.
-func fakeBuilder(t *testing.T, fp *fakePolaris) clientBuilderFunc {
+func fakeBuilder(t tHelper, fp *fakePolaris) clientBuilderFunc {
 	t.Helper()
 	return func(_ context.Context, _ client.Client, _ *polarisv1alpha1.PolarisConnection) (*polaris.Client, error) {
 		return newClientForFake(t, fp), nil
@@ -261,6 +271,19 @@ func gotCondition(conds []metav1.Condition, typ string, status metav1.ConditionS
 		}
 	}
 	return false
+}
+
+// ensureNamespace creates the given namespace if it doesn't already exist.
+// envtest specs use one dedicated namespace per kind under test to isolate
+// fixtures — envtest runs no namespace-lifecycle controller, so a deleted
+// Namespace would hang "Terminating" forever, meaning these are created
+// once per suite run and never deleted.
+func ensureNamespace(ctx context.Context, c client.Client, name string) error {
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	if err := c.Create(ctx, ns); err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
 }
 
 // dumpConditions formats conditions for human-readable test failure output.

@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -25,6 +26,34 @@ import (
 
 	polarisv1alpha1 "github.com/antoniocali/polaris-k8s/api/v1alpha1"
 )
+
+// TestBuildIcebergSchema_PrimitiveTypeSerializesAsString is a regression test:
+// a primitive Iceberg type must serialize as a bare JSON string (e.g. "long"),
+// not an object. buildIcebergSchema used to call the generated union type's
+// MergePrimitiveType, which runs the value through an object-merge helper —
+// fine for the struct/list/map variants, but a primitive has no object to
+// merge into, so it silently produced "{}" for the type field. Real Polaris
+// rejects that ("Cannot parse type from json: {}"); the fake Polaris server
+// used by every other unit test here doesn't validate body content at all,
+// so this went unnoticed until a real envtest/e2e run against real Polaris.
+// FromPrimitiveType (a straight assignment) is the correct call.
+func TestBuildIcebergSchema_PrimitiveTypeSerializesAsString(t *testing.T) {
+	schema, err := buildIcebergSchema(polarisv1alpha1.IcebergSchema{
+		Fields: []polarisv1alpha1.IcebergField{
+			{ID: 1, Name: "id", Type: "long", Required: true},
+		},
+	})
+	if err != nil {
+		t.Fatalf("buildIcebergSchema: %v", err)
+	}
+	b, err := json.Marshal(schema)
+	if err != nil {
+		t.Fatalf("marshal schema: %v", err)
+	}
+	if !strings.Contains(string(b), `"type":"long"`) {
+		t.Fatalf("expected field type to serialize as the bare string \"long\", got: %s", b)
+	}
+}
 
 // TestPolarisTableReconcile_WaitsOnServerSide404 covers the data-plane (Catalog
 // client) 404 backstop: the table's namespace doesn't exist server-side yet, so

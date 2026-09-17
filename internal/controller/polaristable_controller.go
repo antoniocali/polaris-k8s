@@ -210,7 +210,11 @@ func buildIcebergSchema(s polarisv1alpha1.IcebergSchema) (catalog.Schema, error)
 	out := catalog.Schema{Type: "struct"}
 	for _, f := range s.Fields {
 		var ft catalog.Type
-		if err := ft.MergePrimitiveType(f.Type); err != nil {
+		// FromPrimitiveType, not MergePrimitiveType: a primitive type serializes
+		// as a bare JSON string (e.g. "long"), not an object, so there's nothing
+		// to merge into — Merge* runs the value through oapi-codegen's
+		// object-merge helper and silently produces "{}" for a non-object value.
+		if err := ft.FromPrimitiveType(f.Type); err != nil {
 			return catalog.Schema{}, fmt.Errorf("schema field %q has unsupported type %q (only primitive types supported in v1alpha1): %w", f.Name, f.Type, err)
 		}
 		field := catalog.StructField{
