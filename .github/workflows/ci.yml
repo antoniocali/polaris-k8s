@@ -16,6 +16,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      code: ${{ steps.filter.outputs.code }}
       e2e: ${{ steps.filter.outputs.e2e }}
     steps:
       - uses: actions/checkout@v7
@@ -23,6 +24,21 @@ jobs:
         id: filter
         with:
           filters: |
+            code:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - 'Dockerfile'
+              - 'Makefile'
+              - 'config/**'
+              - 'api/**'
+              - 'internal/**'
+              - 'cmd/**'
+              - 'test/**'
+              - 'hack/**'
+              - '.golangci.yml'
+              - '.custom-gcl.yml'
+              - '.github/workflows/ci.yml'
             e2e:
               - 'api/**'
               - 'internal/**'
@@ -32,6 +48,8 @@ jobs:
               - 'Dockerfile'
 
   lint:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -41,6 +59,8 @@ jobs:
       - run: make lint-config lint
 
   test:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -51,6 +71,8 @@ jobs:
       - run: make test
 
   build:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
