@@ -1,0 +1,59 @@
+site_name: polaris-k8s
+site_description: A Kubernetes operator that manages Apache Polaris as Infrastructure-as-Code
+site_url: https://antoniocali.github.io/polaris-k8s/
+repo_url: https://github.com/antoniocali/polaris-k8s
+repo_name: antoniocali/polaris-k8s
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Why: index.md
+  - Getting started: getting-started.md
+  - Tutorial: tutorial.md
+  - CRD reference:
+      - Overview: crds/index.md
+      - PolarisConnection: crds/connection.md
+      - PolarisCatalog: crds/catalog.md
+      - PolarisNamespace: crds/namespace.md
+      - PolarisTable: crds/table.md
+      - PolarisView: crds/view.md
+      - PolarisPolicy: crds/policy.md
+      - PolarisPrincipal: crds/principal.md
+      - Roles (PrincipalRole / CatalogRole): crds/roles.md
+      - Bindings: crds/bindings.md
+      - PolarisGrant: crds/grant.md
+  - Troubleshooting: troubleshooting.md
