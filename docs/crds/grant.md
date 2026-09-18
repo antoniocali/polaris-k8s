@@ -1,6 +1,6 @@
 # PolarisGrant
 
-Attaches a single Polaris privilege on a single target to a [`PolarisCatalogRole`](roles.md). One privilege per CR, deliberately — it keeps each grant individually addressable for revocation and auditing, rather than burying a privilege list inside a larger object where a diff has to be read carefully to see what actually changed.
+Attaches a single Polaris privilege on a single target to a [`PolarisCatalogRole`](roles.md). One privilege per CR, deliberately. It keeps each grant individually addressable for revocation and auditing, rather than burying a privilege list inside a larger object where a diff has to be read carefully to see what actually changed.
 
 ## Spec
 
@@ -16,11 +16,11 @@ One of: `CATALOG_MANAGE_CONTENT`, `CATALOG_MANAGE_ACCESS`, `CATALOG_MANAGE_METAD
 
 ### GrantTarget
 
-Which sub-ref is required depends on `type` — enforced by CEL rules at admission, so `kubectl apply` rejects an inconsistent combination with a clear message rather than letting it reach Polaris.
+Which sub-ref is required depends on `type`. CEL rules enforce this at admission, so `kubectl apply` rejects an inconsistent combination with a clear message rather than letting it reach Polaris.
 
 | `type` | Required sub-refs |
 |---|---|
-| `catalog` | none — no sub-refs may be set |
+| `catalog` | none, no sub-refs may be set |
 | `namespace` | `namespaceRef` |
 | `table` | `namespaceRef` and `tableRef` |
 | `view` | `namespaceRef` and `viewRef` |

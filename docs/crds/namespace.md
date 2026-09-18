@@ -15,7 +15,7 @@ A logical container for tables and views inside a catalog. Nesting is expressed 
 
 | Field | Description |
 |---|---|
-| `fullPath` | Fully qualified namespace path, e.g. `["analytics", "sales"]` — resolved by walking `parentRef`. |
+| `fullPath` | Fully qualified namespace path, resolved by walking `parentRef`. For example `["analytics", "sales"]`. |
 | `conditions` | `Ready`, `Synced`. |
 
 ## Nesting example
@@ -43,7 +43,7 @@ spec:
   name: sales              # final Polaris-side path segment; overrides metadata.name
 ```
 
-The nested namespace ends up as `analytics.sales` in Polaris — that's why `metadata.name` had to be `analytics-sales` (Kubernetes names must be unique within a namespace across the whole nesting tree) while `spec.name` carries the actual path segment.
+The nested namespace ends up as `analytics.sales` in Polaris. That's why `metadata.name` had to be `analytics-sales`, since Kubernetes names must be unique within a namespace across the whole nesting tree, while `spec.name` carries the actual path segment.
 
 !!! note
-    Enforcing that `parentRef` resolves to the same `catalogRef` as this namespace is a reconciler check, not something the CRD schema alone can express — if you see it rejected, it's here, not in Polaris.
+    Enforcing that `parentRef` resolves to the same `catalogRef` as this namespace is a reconciler check, not something the CRD schema alone can express. If you see it rejected, it's here, not in Polaris.

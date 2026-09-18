@@ -24,9 +24,9 @@ An Iceberg table managed inside a Polaris namespace.
 
 | Field | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `id` | int32 | yes | | Iceberg field ID — stable across schema evolution. |
+| `id` | int32 | yes | | Iceberg field ID, stable across schema evolution. |
 | `name` | string | yes | | Column name. |
-| `type` | string | yes | | Iceberg type: `int`, `long`, `string`, `decimal(10,2)`, a nested `struct<...>`, etc. Validation is intentionally loose — Polaris is the source of truth for valid types. |
+| `type` | string | yes | | Iceberg type: `int`, `long`, `string`, `decimal(10,2)`, a nested `struct<...>`, and so on. Validation is intentionally loose. Polaris is the source of truth for valid types. |
 | `required` | bool | no | `false` | Whether the field is `NOT NULL`. |
 | `doc` | string | no | | Human-readable column description. |
 
@@ -78,4 +78,4 @@ spec:
 ```
 
 !!! warning "Schema/partition drift isn't reconciled"
-    Initial create is full-fidelity, but changes to `spec.schema` or `spec.partitionSpec` on an existing table aren't detected or applied — this requires the Iceberg `CommitTable` machinery, which isn't implemented yet. Changing a table's schema today means dropping and recreating the CR. See [Why](../index.md#what-it-isnt) for why this project leans away from managing ongoing schema evolution this way in the first place.
+    Initial create is full-fidelity, but changes to `spec.schema` or `spec.partitionSpec` on an existing table aren't detected or applied. That requires the Iceberg `CommitTable` machinery, which isn't implemented yet. Changing a table's schema today means dropping and recreating the CR. See [Why](../index.md) for why this project leans away from managing ongoing schema evolution this way in the first place.

@@ -1,6 +1,6 @@
 # Roles: PolarisPrincipalRole and PolarisCatalogRole
 
-Two kinds, same tiny shape — a name and a property bag. What differs is scope: a `PolarisPrincipalRole` is server-wide and gets assigned to principals; a `PolarisCatalogRole` is scoped to one catalog and is the attachment point for [grants](grant.md). A [`PolarisCatalogRoleBinding`](bindings.md) is what connects the two.
+Two kinds, the same tiny shape: a name and a property bag. What differs is scope. A `PolarisPrincipalRole` is server-wide and gets assigned to principals. A `PolarisCatalogRole` is scoped to one catalog and is the attachment point for [grants](grant.md). A [`PolarisCatalogRoleBinding`](bindings.md) is what connects the two.
 
 ## PolarisPrincipalRole
 

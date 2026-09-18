@@ -1,6 +1,6 @@
 # PolarisPrincipal
 
-An identity (user or service) registered in Polaris. The operator manages its lifecycle and writes the generated `clientId`/`clientSecret` to a Secret you name — you never set credentials yourself.
+An identity, a user or a service, registered in Polaris. The operator manages its lifecycle and writes the generated `clientId`/`clientSecret` to a Secret you name. You never set credentials yourself.
 
 ## Spec
 
@@ -16,7 +16,7 @@ An identity (user or service) registered in Polaris. The operator manages its li
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `name` | string | yes | Same-namespace Secret name. The operator creates and owns this Secret (real `ownerReferences` — garbage-collected when the principal is deleted). |
+| `name` | string | yes | Same-namespace Secret name. The operator creates and owns this Secret, with a real owner reference, so it's garbage-collected when the principal is deleted. |
 
 ## Status
 
