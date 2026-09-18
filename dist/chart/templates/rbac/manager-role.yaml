@@ -1,0 +1,82 @@
+apiVersion: rbac.authorization.k8s.io/v1
+{{- if .Values.rbac.namespaced }}
+kind: Role
+{{- else }}
+kind: ClusterRole
+{{- end }}
+metadata:
+{{- if .Values.rbac.namespaced }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
+  name: {{ include "polaris-k8s.resourceName" (dict "suffix" "manager-role" "context" $) }}
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings
+  - polariscatalogroles
+  - polariscatalogs
+  - polarisconnections
+  - polarisgrants
+  - polarisnamespaces
+  - polarispolicies
+  - polarisprincipalrolebindings
+  - polarisprincipalroles
+  - polarisprincipals
+  - polaristables
+  - polarisviews
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/finalizers
+  - polariscatalogroles/finalizers
+  - polariscatalogs/finalizers
+  - polarisconnections/finalizers
+  - polarisgrants/finalizers
+  - polarisnamespaces/finalizers
+  - polarispolicies/finalizers
+  - polarisprincipalrolebindings/finalizers
+  - polarisprincipalroles/finalizers
+  - polarisprincipals/finalizers
+  - polaristables/finalizers
+  - polarisviews/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/status
+  - polariscatalogroles/status
+  - polariscatalogs/status
+  - polarisconnections/status
+  - polarisgrants/status
+  - polarisnamespaces/status
+  - polarispolicies/status
+  - polarisprincipalrolebindings/status
+  - polarisprincipalroles/status
+  - polarisprincipals/status
+  - polaristables/status
+  - polarisviews/status
+  verbs:
+  - get
+  - patch
+  - update

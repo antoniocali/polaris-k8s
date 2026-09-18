@@ -1,0 +1,3666 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+    control-plane: controller-manager
+  name: polaris-k8s-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polariscatalogrolebindings.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisCatalogRoleBinding
+    listKind: PolarisCatalogRoleBindingList
+    plural: polariscatalogrolebindings
+    shortNames:
+    - pcrb
+    singular: polariscatalogrolebinding
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.principalRoleRef.name
+      name: PrincipalRole
+      type: string
+    - jsonPath: .spec.catalogRoleRef.name
+      name: CatalogRole
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisCatalogRoleBinding grants a PolarisCatalogRole to a
+          PolarisPrincipalRole — the bridge that lets a principal role's holders
+          inherit catalog-scoped privileges.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisCatalogRoleBindingSpec binds a PolarisPrincipalRole to a
+              PolarisCatalogRole so that holders of the principal role inherit the
+              catalog-scoped grants.
+            properties:
+              catalogRoleRef:
+                description: catalogRoleRef points at the PolarisCatalogRole being
+                  attached.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              principalRoleRef:
+                description: principalRoleRef points at the PolarisPrincipalRole granted
+                  access.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - catalogRoleRef
+            - principalRoleRef
+            type: object
+          status:
+            description: PolarisCatalogRoleBindingStatus reports the observed state
+              of a binding.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polariscatalogroles.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisCatalogRole
+    listKind: PolarisCatalogRoleList
+    plural: polariscatalogroles
+    shortNames:
+    - pcrole
+    singular: polariscatalogrole
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.catalogRef.name
+      name: Catalog
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisCatalogRole is a role scoped to a single Polaris catalog. Privileges
+          are attached via PolarisGrant; principals reach this role via a
+          PolarisCatalogRoleBinding from a PolarisPrincipalRole.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisCatalogRoleSpec defines a role scoped to a specific Polaris catalog.
+              PolarisGrant resources attach privileges to a CatalogRole; bindings then
+              connect principal roles to catalog roles.
+            properties:
+              catalogRef:
+                description: catalogRef points at the PolarisCatalog this role is
+                  scoped to.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: name is the role name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              properties:
+                additionalProperties:
+                  type: string
+                description: properties is the open-ended property bag Polaris stores
+                  alongside the role.
+                type: object
+            required:
+            - catalogRef
+            type: object
+          status:
+            description: PolarisCatalogRoleStatus reports the observed state of a
+              catalog role.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polariscatalogs.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisCatalog
+    listKind: PolarisCatalogList
+    plural: polariscatalogs
+    shortNames:
+    - pcat
+    singular: polariscatalog
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .spec.storageConfig.storageType
+      name: Storage
+      type: string
+    - jsonPath: .spec.defaultBaseLocation
+      name: Location
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisCatalog is a top-level Polaris catalog (the parent of every Polaris
+          namespace, table, view, and catalog-scoped role).
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolarisCatalogSpec defines a top-level catalog within a Polaris
+              server.
+            properties:
+              connectionRef:
+                description: connectionRef points at the PolarisConnection this catalog
+                  lives on.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              defaultBaseLocation:
+                description: |-
+                  defaultBaseLocation is the storage URI under which new tables are
+                  placed unless overridden.
+                maxLength: 2048
+                minLength: 1
+                type: string
+              name:
+                description: name is the catalog name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended property bag Polaris associates with the
+                  catalog. Keys/values are user-defined.
+                type: object
+              storageConfig:
+                description: storageConfig is the cloud-storage configuration backing
+                  the catalog.
+                properties:
+                  allowedLocations:
+                    description: |-
+                      allowedLocations enumerates the URI prefixes Polaris is permitted to
+                      read from / write to. At least one is required.
+                    items:
+                      type: string
+                    maxItems: 50
+                    minItems: 1
+                    type: array
+                    x-kubernetes-list-type: set
+                  azure:
+                    description: AzureStorageConfig holds Azure-specific storage configuration.
+                    properties:
+                      consentUrl:
+                        description: |-
+                          consentUrl is the Azure consent URL surfaced to the operator for
+                          admin consent flows.
+                        maxLength: 2048
+                        type: string
+                      multiTenantAppName:
+                        description: multiTenantAppName is the Azure AD multi-tenant
+                          application name, if used.
+                        maxLength: 128
+                        type: string
+                      tenantId:
+                        description: tenantId is the Azure AD tenant id Polaris federates
+                          with.
+                        pattern: ^[0-9a-fA-F-]{36}$
+                        type: string
+                    required:
+                    - tenantId
+                    type: object
+                  gcs:
+                    description: GCSStorageConfig holds GCP-specific storage configuration.
+                    properties:
+                      gcsServiceAccount:
+                        description: gcsServiceAccount is the GCP service account
+                          email Polaris impersonates.
+                        pattern: ^[^@]+@[^@]+\.iam\.gserviceaccount\.com$
+                        type: string
+                    required:
+                    - gcsServiceAccount
+                    type: object
+                  s3:
+                    description: S3StorageConfig holds AWS-specific storage configuration.
+                    properties:
+                      externalId:
+                        description: externalId, when set, is required on the role's
+                          trust policy.
+                        maxLength: 1224
+                        type: string
+                      region:
+                        description: region is the AWS region of the bucket (e.g.
+                          eu-west-1).
+                        maxLength: 64
+                        minLength: 1
+                        type: string
+                      roleArn:
+                        description: roleArn is the IAM role Polaris will assume to
+                          access S3.
+                        pattern: ^arn:aws[a-zA-Z-]*:iam::[0-9]{12}:role/.+$
+                        type: string
+                      userArn:
+                        description: |-
+                          userArn is an optional ARN of the user/role Polaris itself runs as,
+                          surfaced for principals that need to add it to a trust policy.
+                        maxLength: 2048
+                        type: string
+                    required:
+                    - region
+                    - roleArn
+                    type: object
+                  storageType:
+                    description: storageType selects which cloud backend the catalog
+                      data lives in.
+                    enum:
+                    - S3
+                    - AZURE
+                    - GCS
+                    - FILE
+                    type: string
+                required:
+                - allowedLocations
+                - storageType
+                type: object
+                x-kubernetes-validations:
+                - message: s3 must be set when storageType is S3
+                  rule: self.storageType != 'S3' || has(self.s3)
+                - message: azure must be set when storageType is AZURE
+                  rule: self.storageType != 'AZURE' || has(self.azure)
+                - message: gcs must be set when storageType is GCS
+                  rule: self.storageType != 'GCS' || has(self.gcs)
+              type:
+                default: INTERNAL
+                description: |-
+                  type selects whether Polaris owns the catalog state (INTERNAL) or
+                  federates from an external catalog (EXTERNAL).
+                enum:
+                - INTERNAL
+                - EXTERNAL
+                type: string
+            required:
+            - connectionRef
+            - defaultBaseLocation
+            - storageConfig
+            type: object
+          status:
+            description: PolarisCatalogStatus reports the observed state of a catalog.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+              polarisCatalogId:
+                description: polarisCatalogId is the server-side identifier for the
+                  catalog.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisconnections.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisConnection
+    listKind: PolarisConnectionList
+    plural: polarisconnections
+    shortNames:
+    - pconn
+    singular: polarisconnection
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.serverUrl
+      name: Server
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisConnection is a handle to an Apache Polaris REST catalog server.
+          Every other resource in this API group attaches to a PolarisConnection
+          either directly or via a parent resource that does.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisConnectionSpec defines the desired state of a connection to an
+              Apache Polaris REST catalog server.
+            properties:
+              caBundleSecretRef:
+                description: |-
+                  caBundleSecretRef optionally references a Secret containing a PEM CA
+                  bundle for validating the Polaris server certificate. Required for
+                  self-signed deployments.
+                properties:
+                  key:
+                    default: ca.crt
+                    minLength: 1
+                    type: string
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+              credentialsSecretRef:
+                description: |-
+                  credentialsSecretRef points at a Secret containing the OAuth clientId and
+                  clientSecret used to authenticate to Polaris.
+                properties:
+                  clientIdKey:
+                    default: clientId
+                    minLength: 1
+                    type: string
+                  clientSecretKey:
+                    default: clientSecret
+                    minLength: 1
+                    type: string
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+              insecureSkipVerify:
+                default: false
+                description: |-
+                  insecureSkipVerify disables TLS verification for the Polaris server.
+                  Strongly discouraged outside of local development.
+                type: boolean
+              scope:
+                default: PRINCIPAL_ROLE:ALL
+                description: |-
+                  scope is the OAuth scope requested when minting tokens. Defaults to
+                  PRINCIPAL_ROLE:ALL which gives the operator full management access.
+                minLength: 1
+                type: string
+              serverUrl:
+                description: serverUrl is the base URL of the Polaris server, e.g.
+                  https://polaris.internal.
+                maxLength: 2048
+                minLength: 1
+                pattern: ^https?://.+
+                type: string
+              tokenPath:
+                default: /api/catalog/v1/oauth/tokens
+                description: |-
+                  tokenPath is the OAuth token endpoint path appended to serverUrl. Defaults
+                  to the standard Polaris token endpoint.
+                minLength: 1
+                type: string
+            required:
+            - credentialsSecretRef
+            - serverUrl
+            type: object
+          status:
+            description: PolarisConnectionStatus reports the observed state of a connection.
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the connection.
+                  Standard types: Ready, AuthValid.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                description: observedGeneration is the .metadata.generation last reconciled.
+                format: int64
+                type: integer
+              serverVersion:
+                description: |-
+                  serverVersion is the version reported by the Polaris server, if
+                  discoverable.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisgrants.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisGrant
+    listKind: PolarisGrantList
+    plural: polarisgrants
+    shortNames:
+    - pgrant
+    singular: polarisgrant
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.catalogRoleRef.name
+      name: Role
+      type: string
+    - jsonPath: .spec.privilege
+      name: Privilege
+      type: string
+    - jsonPath: .spec.target.type
+      name: Target
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisGrant attaches a Polaris privilege on a target (catalog, namespace,
+          table, or view) to a PolarisCatalogRole. One privilege per CR — this keeps
+          grants individually addressable for revocation and auditing.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisGrantSpec attaches a single privilege on a single target to a
+              PolarisCatalogRole.
+            properties:
+              catalogRoleRef:
+                description: catalogRoleRef points at the PolarisCatalogRole receiving
+                  the grant.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              privilege:
+                description: privilege is the access right being granted.
+                enum:
+                - CATALOG_MANAGE_CONTENT
+                - CATALOG_MANAGE_ACCESS
+                - CATALOG_MANAGE_METADATA
+                - CATALOG_READ_PROPERTIES
+                - CATALOG_WRITE_PROPERTIES
+                - NAMESPACE_CREATE
+                - NAMESPACE_DROP
+                - NAMESPACE_LIST
+                - NAMESPACE_READ_PROPERTIES
+                - NAMESPACE_WRITE_PROPERTIES
+                - NAMESPACE_FULL_METADATA
+                - TABLE_CREATE
+                - TABLE_DROP
+                - TABLE_LIST
+                - TABLE_READ_PROPERTIES
+                - TABLE_WRITE_PROPERTIES
+                - TABLE_READ_DATA
+                - TABLE_WRITE_DATA
+                - TABLE_FULL_METADATA
+                - VIEW_CREATE
+                - VIEW_DROP
+                - VIEW_LIST
+                - VIEW_READ_PROPERTIES
+                - VIEW_WRITE_PROPERTIES
+                - VIEW_FULL_METADATA
+                type: string
+              target:
+                description: target identifies the Polaris resource the privilege
+                  applies to.
+                properties:
+                  namespaceRef:
+                    description: namespaceRef is required when type is namespace,
+                      table, or view.
+                    properties:
+                      name:
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                      namespace:
+                        maxLength: 253
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  tableRef:
+                    description: tableRef is required when type is table.
+                    properties:
+                      name:
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                      namespace:
+                        maxLength: 253
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  type:
+                    description: type selects the resource kind the privilege applies
+                      to.
+                    enum:
+                    - catalog
+                    - namespace
+                    - table
+                    - view
+                    type: string
+                  viewRef:
+                    description: viewRef is required when type is view.
+                    properties:
+                      name:
+                        maxLength: 253
+                        minLength: 1
+                        type: string
+                      namespace:
+                        maxLength: 253
+                        type: string
+                    required:
+                    - name
+                    type: object
+                required:
+                - type
+                type: object
+            required:
+            - catalogRoleRef
+            - privilege
+            - target
+            type: object
+            x-kubernetes-validations:
+            - message: target.namespaceRef is required when target.type is namespace
+              rule: self.target.type != 'namespace' || has(self.target.namespaceRef)
+            - message: target.namespaceRef and target.tableRef are required when target.type
+                is table
+              rule: self.target.type != 'table' || (has(self.target.namespaceRef)
+                && has(self.target.tableRef))
+            - message: target.namespaceRef and target.viewRef are required when target.type
+                is view
+              rule: self.target.type != 'view' || (has(self.target.namespaceRef) &&
+                has(self.target.viewRef))
+            - message: when target.type is catalog, no sub-refs may be set
+              rule: self.target.type != 'catalog' || (!has(self.target.namespaceRef)
+                && !has(self.target.tableRef) && !has(self.target.viewRef))
+          status:
+            description: PolarisGrantStatus reports the observed state of a grant.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisnamespaces.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisNamespace
+    listKind: PolarisNamespaceList
+    plural: polarisnamespaces
+    shortNames:
+    - pns
+    singular: polarisnamespace
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.catalogRef.name
+      name: Catalog
+      type: string
+    - jsonPath: .status.fullPath
+      name: Path
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisNamespace is a logical container for tables and views inside a
+          Polaris catalog. Namespaces may be nested via parentRef.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisNamespaceSpec defines a namespace within a Polaris catalog.
+              Nesting is expressed by chaining parentRef rather than by carrying the full
+              path on a single CR — this way each level has its own lifecycle, ownerRef
+              chain, and reconciliation status.
+            properties:
+              catalogRef:
+                description: catalogRef points at the PolarisCatalog this namespace
+                  lives under.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: |-
+                  name is the final path segment of the namespace in Polaris. Defaults to
+                  .metadata.name when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              parentRef:
+                description: |-
+                  parentRef, when set, makes this a nested namespace under another
+                  PolarisNamespace. When unset the namespace is a top-level child of the
+                  catalog. Both refs must resolve to the same catalog at reconcile time.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended property bag Polaris associates with the
+                  namespace. Common keys: location, owner.
+                type: object
+            required:
+            - catalogRef
+            type: object
+          status:
+            description: PolarisNamespaceStatus reports the observed state of a namespace.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              fullPath:
+                description: |-
+                  fullPath is the fully qualified namespace path as Polaris sees it,
+                  e.g. ["analytics", "sales"]. Resolved by walking parentRef.
+                items:
+                  type: string
+                type: array
+                x-kubernetes-list-type: atomic
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarispolicies.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisPolicy
+    listKind: PolarisPolicyList
+    plural: polarispolicies
+    shortNames:
+    - ppol
+    singular: polarispolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.namespaceRef.name
+      name: Namespace
+      type: string
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PolarisPolicy attaches a typed policy (e.g. compaction) to a
+          Polaris namespace.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisPolicySpec defines a Polaris policy attached to a namespace
+              (compaction, retention, etc.).
+            properties:
+              content:
+                description: |-
+                  content is the policy body. It is an arbitrary JSON object whose
+                  schema is defined by the policy type. Polaris validates the contents
+                  at apply time.
+                x-kubernetes-preserve-unknown-fields: true
+              description:
+                description: description is an optional human-readable description.
+                maxLength: 1024
+                type: string
+              name:
+                description: name is the policy name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_.-]+$
+                type: string
+              namespaceRef:
+                description: namespaceRef points at the PolarisNamespace this policy
+                  applies to.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              type:
+                description: type identifies the Polaris policy type (e.g. system.data-compaction).
+                maxLength: 255
+                minLength: 1
+                pattern: ^[a-zA-Z0-9_.-]+$
+                type: string
+            required:
+            - content
+            - namespaceRef
+            - type
+            type: object
+          status:
+            description: PolarisPolicyStatus reports the observed state of a policy.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisprincipalrolebindings.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisPrincipalRoleBinding
+    listKind: PolarisPrincipalRoleBindingList
+    plural: polarisprincipalrolebindings
+    shortNames:
+    - pprb
+    singular: polarisprincipalrolebinding
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.principalRef.name
+      name: Principal
+      type: string
+    - jsonPath: .spec.principalRoleRef.name
+      name: Role
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisPrincipalRoleBinding grants a PolarisPrincipalRole to a
+          PolarisPrincipal. The binding can be removed independently of either side.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisPrincipalRoleBindingSpec binds a PolarisPrincipal to a
+              PolarisPrincipalRole. Each binding is one assignment; many-to-many
+              relationships are expressed as multiple CRs.
+            properties:
+              principalRef:
+                description: principalRef points at the PolarisPrincipal being granted
+                  the role.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              principalRoleRef:
+                description: principalRoleRef points at the PolarisPrincipalRole being
+                  assigned.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+            required:
+            - principalRef
+            - principalRoleRef
+            type: object
+          status:
+            description: PolarisPrincipalRoleBindingStatus reports the observed state
+              of a binding.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisprincipalroles.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisPrincipalRole
+    listKind: PolarisPrincipalRoleList
+    plural: polarisprincipalroles
+    shortNames:
+    - pprole
+    singular: polarisprincipalrole
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisPrincipalRole is a server-wide role in Polaris that may be granted
+          to one or more principals via PolarisPrincipalRoleBinding.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              PolarisPrincipalRoleSpec defines a server-wide role that can be assigned
+              to principals.
+            properties:
+              connectionRef:
+                description: connectionRef points at the PolarisConnection the role
+                  lives on.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: name is the role name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              properties:
+                additionalProperties:
+                  type: string
+                description: properties is the open-ended property bag Polaris stores
+                  alongside the role.
+                type: object
+            required:
+            - connectionRef
+            type: object
+          status:
+            description: PolarisPrincipalRoleStatus reports the observed state of
+              a principal role.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisprincipals.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisPrincipal
+    listKind: PolarisPrincipalList
+    plural: polarisprincipals
+    shortNames:
+    - pprin
+    singular: polarisprincipal
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.principalId
+      name: PrincipalID
+      type: string
+    - jsonPath: .spec.credentialsSecretRef.name
+      name: Secret
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          PolarisPrincipal is an identity (user or service) registered in Polaris.
+          The operator manages the lifecycle of the principal and surfaces the
+          generated clientId/clientSecret to a user-named Secret.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolarisPrincipalSpec defines an identity (user or service)
+              in Polaris.
+            properties:
+              connectionRef:
+                description: connectionRef points at the PolarisConnection the principal
+                  lives on.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              credentialRotationRequired:
+                default: false
+                description: |-
+                  credentialRotationRequired marks the principal as needing its
+                  clientSecret rotated on next reconcile.
+                type: boolean
+              credentialsSecretRef:
+                description: |-
+                  credentialsSecretRef names the same-namespace Secret into which the
+                  operator writes the clientId and clientSecret returned by Polaris when
+                  the principal is created or rotated. The operator owns this Secret.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                required:
+                - name
+                type: object
+              name:
+                description: name is the principal name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended property bag Polaris stores alongside
+                  the principal (e.g. department, owner-team).
+                type: object
+            required:
+            - connectionRef
+            - credentialsSecretRef
+            type: object
+          status:
+            description: PolarisPrincipalStatus reports the observed state of a principal.
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the principal.
+                  Standard types: Ready, CredentialsWritten.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              credentialsLastRotated:
+                description: |-
+                  credentialsLastRotated records when the operator last wrote a new
+                  clientSecret into credentialsSecretRef.
+                format: date-time
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              principalId:
+                description: principalId is the server-side identifier for the principal.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polaristables.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisTable
+    listKind: PolarisTableList
+    plural: polaristables
+    shortNames:
+    - ptbl
+    singular: polaristable
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.namespaceRef.name
+      name: Namespace
+      type: string
+    - jsonPath: .spec.writeFormat
+      name: Format
+      type: string
+    - jsonPath: .status.location
+      name: Location
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PolarisTable is an Iceberg table managed inside a Polaris namespace.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolarisTableSpec defines an Iceberg table managed in a Polaris
+              namespace.
+            properties:
+              name:
+                description: name is the table name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              namespaceRef:
+                description: namespaceRef points at the PolarisNamespace this table
+                  lives in.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              partitionSpec:
+                description: partitionSpec is the optional partitioning strategy.
+                properties:
+                  fields:
+                    description: fields are the partition transforms applied to source
+                      columns.
+                    items:
+                      description: |-
+                        IcebergPartitionField is a single partition column produced by applying
+                        a transform to a source schema field.
+                      properties:
+                        fieldId:
+                          description: fieldId is the id of the partition field itself.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        name:
+                          description: name is the partition column name.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                        sourceId:
+                          description: sourceId is the id of the source schema field
+                            this partition derives from.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        transform:
+                          description: |-
+                            transform is the Iceberg partition transform: identity, year, month, day,
+                            hour, bucket[N], truncate[N], void.
+                          pattern: ^(identity|year|month|day|hour|void|bucket\[[0-9]+\]|truncate\[[0-9]+\])$
+                          type: string
+                      required:
+                      - fieldId
+                      - name
+                      - sourceId
+                      - transform
+                      type: object
+                    maxItems: 100
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                required:
+                - fields
+                type: object
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended table property bag Polaris stores
+                  alongside the table (e.g. write.target-file-size-bytes).
+                type: object
+              schema:
+                description: schema is the Iceberg schema for the table.
+                properties:
+                  fields:
+                    description: fields are the columns of the schema, in declaration
+                      order.
+                    items:
+                      description: IcebergField describes a single column in an Iceberg
+                        schema.
+                      properties:
+                        doc:
+                          description: doc is an optional human-readable description
+                            of the field.
+                          maxLength: 1024
+                          type: string
+                        id:
+                          description: id is the Iceberg field id (stable across schema
+                            evolution).
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        name:
+                          description: name is the column name.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                        required:
+                          default: false
+                          description: required indicates whether the field is NOT
+                            NULL. Defaults to false.
+                          type: boolean
+                        type:
+                          description: |-
+                            type is the Iceberg type (e.g. "int", "long", "string", "decimal(10,2)",
+                            or a nested "struct<...>"). Validation is intentionally loose — Polaris
+                            itself is the source of truth for valid types.
+                          minLength: 1
+                          type: string
+                      required:
+                      - id
+                      - name
+                      - type
+                      type: object
+                    maxItems: 10000
+                    minItems: 1
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  identifierFieldIds:
+                    description: identifierFieldIds carries the primary-key field
+                      ids, if any.
+                    items:
+                      format: int32
+                      type: integer
+                    type: array
+                    x-kubernetes-list-type: set
+                required:
+                - fields
+                type: object
+              writeFormat:
+                default: parquet
+                description: writeFormat is the default data file format new writes
+                  will use.
+                enum:
+                - parquet
+                - orc
+                - avro
+                type: string
+            required:
+            - namespaceRef
+            - schema
+            type: object
+          status:
+            description: PolarisTableStatus reports the observed state of a table.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              currentSnapshotId:
+                description: currentSnapshotId is the most recently committed snapshot,
+                  if any.
+                format: int64
+                type: integer
+              location:
+                description: location is the resolved on-disk URI of the table.
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              tableUuid:
+                description: tableUuid is the stable Iceberg uuid of the table.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polarisviews.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisView
+    listKind: PolarisViewList
+    plural: polarisviews
+    shortNames:
+    - pview
+    singular: polarisview
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.namespaceRef.name
+      name: Namespace
+      type: string
+    - jsonPath: .spec.dialect
+      name: Dialect
+      type: string
+    - jsonPath: .status.versionId
+      name: Version
+      priority: 1
+      type: integer
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PolarisView is an Iceberg view managed inside a Polaris namespace.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolarisViewSpec defines an Iceberg view managed in a Polaris
+              namespace.
+            properties:
+              dialect:
+                default: spark
+                description: dialect identifies the SQL dialect the sql field is written
+                  in.
+                maxLength: 64
+                minLength: 1
+                type: string
+              name:
+                description: name is the view name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              namespaceRef:
+                description: namespaceRef points at the PolarisNamespace this view
+                  lives in.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended view property bag Polaris stores
+                  alongside the view.
+                type: object
+              schema:
+                description: schema is the output schema of the view.
+                properties:
+                  fields:
+                    description: fields are the columns of the schema, in declaration
+                      order.
+                    items:
+                      description: IcebergField describes a single column in an Iceberg
+                        schema.
+                      properties:
+                        doc:
+                          description: doc is an optional human-readable description
+                            of the field.
+                          maxLength: 1024
+                          type: string
+                        id:
+                          description: id is the Iceberg field id (stable across schema
+                            evolution).
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        name:
+                          description: name is the column name.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                        required:
+                          default: false
+                          description: required indicates whether the field is NOT
+                            NULL. Defaults to false.
+                          type: boolean
+                        type:
+                          description: |-
+                            type is the Iceberg type (e.g. "int", "long", "string", "decimal(10,2)",
+                            or a nested "struct<...>"). Validation is intentionally loose — Polaris
+                            itself is the source of truth for valid types.
+                          minLength: 1
+                          type: string
+                      required:
+                      - id
+                      - name
+                      - type
+                      type: object
+                    maxItems: 10000
+                    minItems: 1
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  identifierFieldIds:
+                    description: identifierFieldIds carries the primary-key field
+                      ids, if any.
+                    items:
+                      format: int32
+                      type: integer
+                    type: array
+                    x-kubernetes-list-type: set
+                required:
+                - fields
+                type: object
+              sql:
+                description: sql is the view definition.
+                maxLength: 65535
+                minLength: 1
+                type: string
+            required:
+            - namespaceRef
+            - schema
+            - sql
+            type: object
+          status:
+            description: PolarisViewStatus reports the observed state of a view.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              observedGeneration:
+                format: int64
+                type: integer
+              versionId:
+                description: versionId is the integer version-id of the current view
+                  representation.
+                format: int64
+                type: integer
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-controller-manager
+  namespace: polaris-k8s-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-leader-election-role
+  namespace: polaris-k8s-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: polaris-k8s-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings
+  - polariscatalogroles
+  - polariscatalogs
+  - polarisconnections
+  - polarisgrants
+  - polarisnamespaces
+  - polarispolicies
+  - polarisprincipalrolebindings
+  - polarisprincipalroles
+  - polarisprincipals
+  - polaristables
+  - polarisviews
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/finalizers
+  - polariscatalogroles/finalizers
+  - polariscatalogs/finalizers
+  - polarisconnections/finalizers
+  - polarisgrants/finalizers
+  - polarisnamespaces/finalizers
+  - polarispolicies/finalizers
+  - polarisprincipalrolebindings/finalizers
+  - polarisprincipalroles/finalizers
+  - polarisprincipals/finalizers
+  - polaristables/finalizers
+  - polarisviews/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/status
+  - polariscatalogroles/status
+  - polariscatalogs/status
+  - polarisconnections/status
+  - polarisgrants/status
+  - polarisnamespaces/status
+  - polarispolicies/status
+  - polarisprincipalrolebindings/status
+  - polarisprincipalroles/status
+  - polarisprincipals/status
+  - polaristables/status
+  - polarisviews/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: polaris-k8s-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: polaris-k8s-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalog-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalog-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalog-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogs/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrole-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrole-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrole-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrolebinding-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrolebinding-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polariscatalogrolebinding-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polariscatalogrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisconnection-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisconnection-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisconnection-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisconnections/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisgrant-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisgrant-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisgrant-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisgrants/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisnamespace-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisnamespace-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisnamespace-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisnamespaces/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarispolicy-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarispolicy-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarispolicy-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarispolicies/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipal-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipal-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipal-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipals/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrole-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrole-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrole-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalroles/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrolebinding-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrolebinding-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisprincipalrolebinding-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisprincipalrolebindings/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polaristable-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polaristable-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polaristable-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polaristables/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisview-admin-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews
+  verbs:
+  - '*'
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisview-editor-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-polarisview-viewer-role
+rules:
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - polaris.k8s.calific.io
+  resources:
+  - polarisviews/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-leader-election-rolebinding
+  namespace: polaris-k8s-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: polaris-k8s-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: polaris-k8s-controller-manager
+  namespace: polaris-k8s-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+  name: polaris-k8s-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: polaris-k8s-manager-role
+subjects:
+- kind: ServiceAccount
+  name: polaris-k8s-controller-manager
+  namespace: polaris-k8s-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: polaris-k8s-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: polaris-k8s-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: polaris-k8s-controller-manager
+  namespace: polaris-k8s-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+    control-plane: controller-manager
+  name: polaris-k8s-controller-manager-metrics-service
+  namespace: polaris-k8s-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app.kubernetes.io/name: polaris-k8s
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: polaris-k8s
+    control-plane: controller-manager
+  name: polaris-k8s-controller-manager
+  namespace: polaris-k8s-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: polaris-k8s
+      control-plane: controller-manager
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        app.kubernetes.io/name: polaris-k8s
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        image: controller:latest
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 8081
+          name: health
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts: []
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: polaris-k8s-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes: []

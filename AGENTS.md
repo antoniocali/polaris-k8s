@@ -267,11 +267,19 @@ make build-installer IMG=<registry>/<project>:tag
 kubectl apply -f https://raw.githubusercontent.com/<org>/<repo>/<tag>/dist/install.yaml
 ```
 
-### Option 2: Helm / GitOps
+### Option 2: Helm
 
-There is intentionally **no Helm chart in this repo.** If you need Helm/GitOps
-deployment, build one around the CRDs + ClusterRole taken from `config/crd` and
-`config/rbac`. Regenerate those with `make manifests`.
+```bash
+make helm-deploy IMG=<registry>/<project>:<tag>   # helm upgrade --install
+make helm-uninstall
+```
+
+The chart lives at `dist/chart/`, generated from `config/` via the
+`helm.kubebuilder.io/v2-alpha` plugin — **never hand-edit files under
+`dist/chart/`**; regenerate with `kubebuilder edit --plugins=helm/v2-alpha`
+after changing `config/` (it also re-runs `make manifests generate
+build-installer` for you). GitOps deployment (ArgoCD, Flux, …) wires this
+chart in like any other; that wiring itself isn't this repo's concern.
 
 ### Publish Container Image
 
