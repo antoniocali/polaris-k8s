@@ -56,4 +56,5 @@ nav:
       - Roles (PrincipalRole / CatalogRole): crds/roles.md
       - Bindings: crds/bindings.md
       - PolarisGrant: crds/grant.md
+  - Helm chart: helm-chart.md
   - Troubleshooting: troubleshooting.md
