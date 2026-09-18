@@ -40,4 +40,4 @@ spec:
 ```
 
 !!! warning "SQL drift isn't reconciled"
-    Same caveat as `PolarisTable`: initial create is full-fidelity, but changes to `spec.sql` or `spec.schema` on an existing view aren't picked up — the `CommitView` machinery isn't implemented yet. Recreate the CR to change a view's definition.
+    Same caveat as `PolarisTable`: initial create is full-fidelity, but changes to `spec.sql` or `spec.schema` on an existing view aren't picked up. The `CommitView` machinery isn't implemented yet. Recreate the CR to change a view's definition.

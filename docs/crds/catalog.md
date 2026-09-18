@@ -1,6 +1,6 @@
 # PolarisCatalog
 
-A top-level Polaris catalog — the parent of every namespace, table, view, and catalog-scoped role. Owns the catalog's storage backend configuration.
+A top-level Polaris catalog, the parent of every namespace, table, view, and catalog-scoped role. Owns the catalog's storage backend configuration.
 
 ## Spec
 
@@ -15,7 +15,7 @@ A top-level Polaris catalog — the parent of every namespace, table, view, and 
 
 ### StorageConfig
 
-The `s3`/`azure`/`gcs` sub-block matching `storageType` is required (enforced by a CEL rule — `kubectl apply` fails with a clear message if it's missing). `FILE` storage needs none of them, just `allowedLocations`; it's testing-only and Polaris itself rejects it unless the server was started with `ALLOW_INSECURE_STORAGE_TYPES=true`.
+The `s3`, `azure`, or `gcs` sub-block matching `storageType` is required. A CEL rule enforces this, so `kubectl apply` fails with a clear message if it's missing. `FILE` storage needs none of them, just `allowedLocations`. It's for testing only, and Polaris itself rejects it unless the server was started with `ALLOW_INSECURE_STORAGE_TYPES=true`.
 
 | Field | Type | Required | Description |
 |---|---|---|---|
@@ -39,7 +39,7 @@ The `s3`/`azure`/`gcs` sub-block matching `storageType` is required (enforced by
 
 ## Drift policy
 
-`properties` is **authoritative** — keys present in the Polaris-side catalog but not in `spec.properties` are removed on the next reconcile. Everything else about the catalog updates in place except its `storageConfig`/`defaultBaseLocation`, which Polaris itself doesn't support changing after creation.
+`properties` is **authoritative**. Keys present in the Polaris-side catalog but not in `spec.properties` are removed on the next reconcile. Everything else about the catalog updates in place, except `storageConfig` and `defaultBaseLocation`, which Polaris itself doesn't support changing after creation.
 
 ## Example
 

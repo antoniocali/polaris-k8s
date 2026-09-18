@@ -1,10 +1,8 @@
 # Bindings: PolarisPrincipalRoleBinding and PolarisCatalogRoleBinding
 
-Access flows through Polaris in two hops, and each hop is its own binding kind — deliberately, so either can be removed independently without touching the other side, and a many-to-many relationship is just multiple small CRs rather than one CR with a list that grows without a clear owner.
+Access flows through Polaris in two hops, and each hop is its own binding kind. That's deliberate. Either hop can be removed independently without touching the other side, and a many-to-many relationship is just multiple small CRs rather than one CR with a list that grows without a clear owner.
 
-```
-Principal ──(PrincipalRoleBinding)──► PrincipalRole ──(CatalogRoleBinding)──► CatalogRole ──(Grant)──► privilege
-```
+A `PolarisPrincipalRoleBinding` connects a principal to a principal role. A `PolarisCatalogRoleBinding` connects that principal role to a catalog role. A [`PolarisGrant`](grant.md) is what then attaches a privilege to the catalog role.
 
 ## PolarisPrincipalRoleBinding
 
@@ -38,7 +36,7 @@ spec:
 
 ## PolarisCatalogRoleBinding
 
-Grants a [`PolarisCatalogRole`](roles.md) to a [`PolarisPrincipalRole`](roles.md) — the bridge that lets everyone holding that principal role inherit the catalog role's grants.
+Grants a [`PolarisCatalogRole`](roles.md) to a [`PolarisPrincipalRole`](roles.md). This is the bridge that lets everyone holding that principal role inherit the catalog role's grants.
 
 ### Spec
 

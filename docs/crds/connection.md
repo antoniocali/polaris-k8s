@@ -1,6 +1,6 @@
 # PolarisConnection
 
-A handle to an Apache Polaris server: its URL and the OAuth client-credentials the operator authenticates with. Every other resource in this API group attaches to a `PolarisConnection`, either directly or via a parent that does. It owns no Polaris-side state — reconciling one means validating the referenced Secret and minting a token to prove the credentials actually work.
+A handle to an Apache Polaris server: its URL and the OAuth client credentials the operator authenticates with. Every other resource in this API group attaches to a `PolarisConnection`, either directly or through a parent that does. It owns no Polaris-side state. Reconciling one means validating the referenced Secret and minting a token to prove the credentials actually work.
 
 ## Spec
 
