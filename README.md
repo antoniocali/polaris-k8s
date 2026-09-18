@@ -6,6 +6,8 @@
 
 **A Kubernetes operator that manages [Apache Polaris](https://polaris.apache.org/) (a REST Iceberg catalog) as Infrastructure-as-Code.**
 
+**📖 [Full documentation](https://antoniocali.github.io/polaris-k8s/)** — the why, a tutorial, installation, and a field-by-field reference for all 12 CRDs.
+
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects — so you can manage your Iceberg catalog the same way you manage everything else: with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
 
 > **Status: alpha.** All 12 reconcilers are implemented and unit-tested against a fake Polaris server. There's no envtest e2e suite yet, and no Helm chart is bundled (install via kustomize — see [DEPLOYMENT.md](DEPLOYMENT.md)). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).

@@ -36,3 +36,6 @@ skills-lock.json
 
 # Personal planning notes (kept in ~/.claude/plans/)
 PLAN.md
+
+# MkDocs build output (docs/ site) — built by CI, not committed
+/site/
