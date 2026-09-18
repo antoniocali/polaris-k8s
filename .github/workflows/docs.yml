@@ -1,4 +1,7 @@
-# Builds and deploys the MkDocs site (docs/) to GitHub Pages.
+# Builds and deploys the docs site (docs/) to GitHub Pages with Zensical,
+# a MkDocs-compatible static site generator from the Material for MkDocs
+# team. Reads the same mkdocs.yml unchanged.
+# See https://zensical.org/docs/compatibility/mkdocs/migration/
 name: docs
 
 on:
@@ -27,8 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install mkdocs-material
-      - run: mkdocs build --strict
+      - run: pip install zensical
+      - run: zensical build --clean --strict
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

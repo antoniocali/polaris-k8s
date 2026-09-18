@@ -103,7 +103,7 @@ internal/polaris/  Polaris HTTP client: facade plus generated sub-clients (manag
 openapi/           Vendored Apache Polaris 1.4.1 OpenAPI specs (the HTTP client is generated from these)
 cmd/main.go        Manager entrypoint
 dist/chart/        Helm chart, generated from config/ (regenerate with `kubebuilder edit --plugins=helm/v2-alpha`)
-docs/              GitHub Pages documentation site (MkDocs)
+docs/              GitHub Pages documentation site (Zensical, config in mkdocs.yml)
 DEPLOYMENT.md      Install + sample CRs
 CONTRIBUTING.md    How to contribute
 CLAUDE.md          AI-agent-facing project conventions

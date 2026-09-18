@@ -78,7 +78,7 @@ internal/polaris/           # Polaris HTTP client facade (client.go, auth.go, er
 config/                     # CRD/RBAC/manager manifests (kubebuilder-managed) — source of truth for both install paths
 dist/chart/                 # Helm chart, generated from config/ via `kubebuilder edit --plugins=helm/v2-alpha` — do not hand-edit
 dist/install.yaml           # kustomize-bundle installer, generated via `make build-installer`
-docs/                       # GitHub Pages documentation site (MkDocs Material), deployed by .github/workflows/docs.yml
+docs/                       # GitHub Pages documentation site (Zensical, a MkDocs-compatible generator; config is still mkdocs.yml), deployed by .github/workflows/docs.yml
 test/e2e/                   # full 12-kind object graph against a real Apache Polaris (sibling Kind container)
 openapi/                    # vendored Apache Polaris OpenAPI specs (1.4.1) — bump procedure in CONTRIBUTING.md
 hack/                       # codegen configs + prepare-specs.sh (rewrites specs before oapi-codegen); hack/local-dev/ is the Tilt-driven dev harness
