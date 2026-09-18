@@ -6,7 +6,7 @@
 
 **A Kubernetes operator that manages [Apache Polaris](https://polaris.apache.org/) (a REST Iceberg catalog) as Infrastructure-as-Code.**
 
-**📖 [Full documentation](https://antoniocali.github.io/polaris-k8s/)** — the why, a tutorial, installation, and a field-by-field reference for all 12 CRDs.
+**📖 [Full documentation](https://calific.io/polaris-k8s/)** — the why, a tutorial, installation, and a field-by-field reference for all 12 CRDs.
 
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects — so you can manage your Iceberg catalog the same way you manage everything else: with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
 
