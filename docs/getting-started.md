@@ -67,7 +67,7 @@ helm upgrade --install polaris-k8s ./dist/chart \
   --wait
 ```
 
-See the [CRD reference](crds/index.md) for what to apply next either way, or the chart's `values.yaml` for configuration knobs (RBAC scope, metrics, resource limits). Remove with `make helm-uninstall`.
+See the [CRD reference](crds/index.md) for what to apply next either way, or the [Helm chart reference](helm-chart.md) for every configuration knob (RBAC scope, metrics, resource limits). Remove with `make helm-uninstall`.
 
 ## 3. Point it at your Polaris server
 

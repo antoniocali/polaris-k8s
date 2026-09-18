@@ -86,7 +86,7 @@ or via the equivalent Makefile target (reads the image from `IMG`):
 make helm-deploy IMG=<registry>/polaris-k8s:<tag>
 ```
 
-Useful `values.yaml` knobs: `rbac.namespaced` (cluster-wide `ClusterRole` by default; set `true` for a single-namespace `Role`), `crd.keep` (keep CRDs — and every CR — on `helm uninstall`; defaults to `true`), `metrics.enable`/`prometheus.enable` for observability wiring, and `manager.resources` for the usual requests/limits. See the chart's `values.yaml` for the full set.
+Useful `values.yaml` knobs: `rbac.namespaced` (cluster-wide `ClusterRole` by default; set `true` for a single-namespace `Role`), `crd.keep` (keep CRDs — and every CR — on `helm uninstall`; defaults to `true`), `metrics.enable`/`prometheus.enable` for observability wiring, and `manager.resources` for the usual requests/limits. Full field-by-field reference: [calific.io/polaris-k8s/helm-chart/](https://calific.io/polaris-k8s/helm-chart/).
 
 ```sh
 make helm-uninstall   # or: helm uninstall polaris-k8s -n polaris-k8s-system
