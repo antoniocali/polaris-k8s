@@ -1,0 +1,298 @@
+{{- if .Values.crd.enable }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    {{- if .Values.crd.keep }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: polaristables.polaris.k8s.calific.io
+spec:
+  group: polaris.k8s.calific.io
+  names:
+    categories:
+    - polaris
+    kind: PolarisTable
+    listKind: PolarisTableList
+    plural: polaristables
+    shortNames:
+    - ptbl
+    singular: polaristable
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.namespaceRef.name
+      name: Namespace
+      type: string
+    - jsonPath: .spec.writeFormat
+      name: Format
+      type: string
+    - jsonPath: .status.location
+      name: Location
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PolarisTable is an Iceberg table managed inside a Polaris namespace.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolarisTableSpec defines an Iceberg table managed in a Polaris
+              namespace.
+            properties:
+              name:
+                description: name is the table name in Polaris. Defaults to .metadata.name
+                  when unset.
+                maxLength: 255
+                pattern: ^[a-zA-Z0-9_-]+$
+                type: string
+              namespaceRef:
+                description: namespaceRef points at the PolarisNamespace this table
+                  lives in.
+                properties:
+                  name:
+                    maxLength: 253
+                    minLength: 1
+                    type: string
+                  namespace:
+                    maxLength: 253
+                    type: string
+                required:
+                - name
+                type: object
+              partitionSpec:
+                description: partitionSpec is the optional partitioning strategy.
+                properties:
+                  fields:
+                    description: fields are the partition transforms applied to source
+                      columns.
+                    items:
+                      description: |-
+                        IcebergPartitionField is a single partition column produced by applying
+                        a transform to a source schema field.
+                      properties:
+                        fieldId:
+                          description: fieldId is the id of the partition field itself.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        name:
+                          description: name is the partition column name.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                        sourceId:
+                          description: sourceId is the id of the source schema field
+                            this partition derives from.
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        transform:
+                          description: |-
+                            transform is the Iceberg partition transform: identity, year, month, day,
+                            hour, bucket[N], truncate[N], void.
+                          pattern: ^(identity|year|month|day|hour|void|bucket\[[0-9]+\]|truncate\[[0-9]+\])$
+                          type: string
+                      required:
+                      - fieldId
+                      - name
+                      - sourceId
+                      - transform
+                      type: object
+                    maxItems: 100
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                required:
+                - fields
+                type: object
+              properties:
+                additionalProperties:
+                  type: string
+                description: |-
+                  properties is the open-ended table property bag Polaris stores
+                  alongside the table (e.g. write.target-file-size-bytes).
+                type: object
+              schema:
+                description: schema is the Iceberg schema for the table.
+                properties:
+                  fields:
+                    description: fields are the columns of the schema, in declaration
+                      order.
+                    items:
+                      description: IcebergField describes a single column in an Iceberg
+                        schema.
+                      properties:
+                        doc:
+                          description: doc is an optional human-readable description
+                            of the field.
+                          maxLength: 1024
+                          type: string
+                        id:
+                          description: id is the Iceberg field id (stable across schema
+                            evolution).
+                          format: int32
+                          minimum: 1
+                          type: integer
+                        name:
+                          description: name is the column name.
+                          maxLength: 255
+                          minLength: 1
+                          type: string
+                        required:
+                          default: false
+                          description: required indicates whether the field is NOT
+                            NULL. Defaults to false.
+                          type: boolean
+                        type:
+                          description: |-
+                            type is the Iceberg type (e.g. "int", "long", "string", "decimal(10,2)",
+                            or a nested "struct<...>"). Validation is intentionally loose — Polaris
+                            itself is the source of truth for valid types.
+                          minLength: 1
+                          type: string
+                      required:
+                      - id
+                      - name
+                      - type
+                      type: object
+                    maxItems: 10000
+                    minItems: 1
+                    type: array
+                    x-kubernetes-list-map-keys:
+                    - name
+                    x-kubernetes-list-type: map
+                  identifierFieldIds:
+                    description: identifierFieldIds carries the primary-key field
+                      ids, if any.
+                    items:
+                      format: int32
+                      type: integer
+                    type: array
+                    x-kubernetes-list-type: set
+                required:
+                - fields
+                type: object
+              writeFormat:
+                default: parquet
+                description: writeFormat is the default data file format new writes
+                  will use.
+                enum:
+                - parquet
+                - orc
+                - avro
+                type: string
+            required:
+            - namespaceRef
+            - schema
+            type: object
+          status:
+            description: PolarisTableStatus reports the observed state of a table.
+            properties:
+              conditions:
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              currentSnapshotId:
+                description: currentSnapshotId is the most recently committed snapshot,
+                  if any.
+                format: int64
+                type: integer
+              location:
+                description: location is the resolved on-disk URI of the table.
+                type: string
+              observedGeneration:
+                format: int64
+                type: integer
+              tableUuid:
+                description: tableUuid is the stable Iceberg uuid of the table.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+{{- end }}

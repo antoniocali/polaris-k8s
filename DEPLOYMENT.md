@@ -9,10 +9,10 @@ How to install the polaris-k8s operator on a Kubernetes cluster and declare your
 > + sample CRs: see [`hack/local-dev/README.md`](hack/local-dev/README.md).
 > This document covers installing against a *real* cluster + Polaris.
 
-> No Helm chart is bundled with this repo. The steps below are the plain
-> `kubectl`/kustomize install path; wire your own Helm/GitOps layer around the
-> `config/crd` and `config/rbac` manifests if you need one (regenerate them with
-> `make manifests`).
+> Two install paths: plain `kubectl`/kustomize (below, installs CRDs and the
+> controller as two steps) or the Helm chart under [`dist/chart`](#installing-via-helm)
+> (one step, more configurable). Both come from the same `config/` source —
+> regenerate either with `make manifests` / `kubebuilder edit --plugins=helm/v2-alpha`.
 
 ## Prerequisites
 
@@ -66,6 +66,30 @@ Tear down:
 
 ```sh
 make undeploy
+```
+
+## Installing via Helm
+
+Installs CRDs and the controller together, in one command, from the chart under [`dist/chart`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart):
+
+```sh
+helm upgrade --install polaris-k8s ./dist/chart \
+  --namespace polaris-k8s-system --create-namespace \
+  --set manager.image.repository=<registry>/polaris-k8s \
+  --set manager.image.tag=<tag> \
+  --wait
+```
+
+or via the equivalent Makefile target (reads the image from `IMG`):
+
+```sh
+make helm-deploy IMG=<registry>/polaris-k8s:<tag>
+```
+
+Useful `values.yaml` knobs: `rbac.namespaced` (cluster-wide `ClusterRole` by default; set `true` for a single-namespace `Role`), `crd.keep` (keep CRDs — and every CR — on `helm uninstall`; defaults to `true`), `metrics.enable`/`prometheus.enable` for observability wiring, and `manager.resources` for the usual requests/limits. See the chart's `values.yaml` for the full set.
+
+```sh
+make helm-uninstall   # or: helm uninstall polaris-k8s -n polaris-k8s-system
 ```
 
 ## 3. Configure a Polaris connection

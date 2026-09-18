@@ -40,16 +40,34 @@ You should see all 12 kinds. They share the `polaris` category, so `kubectl get 
 
 ## 2. Deploy the controller
 
+Two ways to do this — same `config/` source underneath, pick whichever fits your workflow.
+
+**Kustomize** (what step 1 already used to install the CRDs):
+
 ```sh
 make docker-build docker-push IMG=<registry>/polaris-k8s:<tag>
 make deploy IMG=<registry>/polaris-k8s:<tag>
 ```
 
-This installs the manager plus its RBAC into the `polaris-k8s-system` namespace. To remove it:
+This installs the manager plus its RBAC into the `polaris-k8s-system` namespace. To remove it: `make undeploy`.
+
+**Helm** — installs CRDs and the controller together in one command, and skips step 1 entirely:
 
 ```sh
-make undeploy
+make helm-deploy IMG=<registry>/polaris-k8s:<tag>
 ```
+
+or directly:
+
+```sh
+helm upgrade --install polaris-k8s ./dist/chart \
+  --namespace polaris-k8s-system --create-namespace \
+  --set manager.image.repository=<registry>/polaris-k8s \
+  --set manager.image.tag=<tag> \
+  --wait
+```
+
+See the [CRD reference](crds/index.md) for what to apply next either way, or the chart's `values.yaml` for configuration knobs (RBAC scope, metrics, resource limits). Remove with `make helm-uninstall`.
 
 ## 3. Point it at your Polaris server
 

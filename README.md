@@ -10,7 +10,7 @@
 
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects — so you can manage your Iceberg catalog the same way you manage everything else: with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
 
-> **Status: alpha.** All 12 reconcilers are implemented and unit-tested against a fake Polaris server. There's no envtest e2e suite yet, and no Helm chart is bundled (install via kustomize — see [DEPLOYMENT.md](DEPLOYMENT.md)). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).
+> **Status: alpha.** All 12 reconcilers are implemented, unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end-to-end against a real Apache Polaris instance. Install via kustomize or Helm — see [DEPLOYMENT.md](DEPLOYMENT.md). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).
 
 ## Why
 
@@ -59,8 +59,6 @@ Bindings: Principal ─► PrincipalRole ─► CatalogRole
 ### Out of scope (today)
 
 - Schema/partition drift on `PolarisTable` and SQL drift on `PolarisView` (initial create works; mutating those fields needs drop+recreate for now).
-- Envtest e2e suite (unit tests only).
-- Deployment tooling — no Helm chart or GitOps config is bundled; install via kustomize (see [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## Quick example
 
@@ -104,6 +102,8 @@ internal/controller/  Reconcilers for all 12 CRDs (+ unit tests)
 internal/polaris/  Polaris HTTP client — facade + generated sub-clients (management, catalog)
 openapi/           Vendored Apache Polaris 1.4.1 OpenAPI specs — HTTP client is generated from these
 cmd/main.go        Manager entrypoint
+dist/chart/        Helm chart (generated from config/ — regenerate with `kubebuilder edit --plugins=helm/v2-alpha`)
+docs/              GitHub Pages documentation site (MkDocs)
 DEPLOYMENT.md      Install + sample CRs
 CONTRIBUTING.md    How to contribute
 CLAUDE.md          AI-agent-facing project conventions
@@ -117,6 +117,7 @@ CLAUDE.md          AI-agent-facing project conventions
 | Apache Polaris (vendored spec) | 1.4.1 |
 | Kubebuilder | v4.14 |
 | Go | 1.26+ |
+| Helm chart (`dist/chart`) | 0.1.0 |
 
 Until a `v1beta1` is published, the API may change without a conversion webhook — pin to a release tag in production.
 
