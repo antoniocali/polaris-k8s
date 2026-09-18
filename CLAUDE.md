@@ -73,13 +73,18 @@ api/v1alpha1/
   polaris<kind>_types.go    # one file per CRD
   zz_generated.deepcopy.go  # GENERATED — do not hand-edit
   api_validation_test.go    # round-trip and validation tests
-internal/controller/        # kubebuilder skeletons — bodies TODO
+internal/controller/        # all 12 reconcilers implemented — *_controller.go (impl), *_unit_test.go (fake client + fake Polaris), *_controller_test.go (envtest, real API server)
 internal/polaris/           # Polaris HTTP client facade (client.go, auth.go, errors.go) + generated sub-clients under management/, catalog/
-config/                     # CRD/RBAC/manager manifests (kubebuilder-managed)
+config/                     # CRD/RBAC/manager manifests (kubebuilder-managed) — source of truth for both install paths
+dist/chart/                 # Helm chart, generated from config/ via `kubebuilder edit --plugins=helm/v2-alpha` — do not hand-edit
+dist/install.yaml           # kustomize-bundle installer, generated via `make build-installer`
+docs/                       # GitHub Pages documentation site (MkDocs Material), deployed by .github/workflows/docs.yml
+test/e2e/                   # full 12-kind object graph against a real Apache Polaris (sibling Kind container)
 openapi/                    # vendored Apache Polaris OpenAPI specs (1.4.1) — bump procedure in CONTRIBUTING.md
-hack/                       # codegen configs + prepare-specs.sh (rewrites specs before oapi-codegen)
+hack/                       # codegen configs + prepare-specs.sh (rewrites specs before oapi-codegen); hack/local-dev/ is the Tilt-driven dev harness
+.github/workflows/          # ci.yml (lint/test/build/e2e, path-filtered), docs.yml, test-chart.yml
 cmd/main.go                 # manager entrypoint (kubebuilder default)
-Makefile                    # generate/manifests/build/test/docker targets
+Makefile                    # generate/manifests/build/test/docker/helm-* targets
 README.md                   # user-facing project overview + scope
 DEPLOYMENT.md               # install + sample CRs
 CONTRIBUTING.md             # PR process + API design conventions
@@ -114,5 +119,5 @@ PolarisCatalogRoleBinding:   PrincipalRole ── inherits ──► CatalogRole
 - **CEL rules are validated at admission**, not at `go build`. A broken CEL expression only surfaces when you `kubectl apply` a CR — always test by applying a sample.
 - **Defaults only apply on create.** Existing CRs in the cluster keep their old values; a controller mutation is the only way to retro-apply.
 - **Namespace nesting requires reconciler logic** to enforce that `parentRef` resolves to the same `catalogRef`. The CRD schema can't express that — it's a reconciler invariant.
-- **All `*Ref` namespaces default to the referrer's namespace at *reconcile* time**, not at admission. Until reconcilers exist, the empty namespace stays empty in `kubectl get -o yaml`.
+- **All `*Ref` namespaces default to the referrer's namespace at *reconcile* time**, not at admission — reconcilers resolve it internally (`resolveNamespace`) but never write it back into `spec`, so `kubectl get -o yaml` always shows an empty `namespace:` field for an unset `*Ref.Namespace`, even on a `Ready` object.
 - **`spec.name` defaulting to `metadata.name`** is also a reconciler responsibility — markers can't express it.

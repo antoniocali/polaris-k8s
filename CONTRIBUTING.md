@@ -11,8 +11,9 @@ Thanks for considering a contribution. This document covers the dev setup, conve
 | `kubebuilder` | v4.14+ |
 | `kubectl` | v1.27+ |
 | `docker` (or Colima) | only needed if you intend to build the manager image |
+| `helm` | only needed if you're working on `dist/chart/` |
 
-A local Kubernetes cluster (kind, minikube, k3d, Colima) is required only when working on reconcilers or running the envtest suite. Pure API/CRD work doesn't need a cluster.
+A local Kubernetes cluster (kind) is only needed for `make test-e2e` or the local-dev harness. The envtest suite (`make test`) downloads its own standalone kube-apiserver/etcd binaries and needs no cluster at all — same as pure API/CRD work.
 
 ## Setup
 
@@ -77,7 +78,7 @@ make test            # full suite incl. envtest
 When adding new code:
 
 - **API changes** (`api/v1alpha1/*_types.go`) — extend `api_validation_test.go` so the new field/type is covered by round-trip + deepcopy tests. Inspect the generated CRD YAML after `make manifests` and confirm required-ness, defaults, enums, and list semantics rendered as intended.
-- **Controller logic** — replace the `PDescribe(...)` stub in the matching `_test.go` with real specs. Use a `httptest.Server` to fake Polaris rather than requiring a live server.
+- **Controller logic** — cover the happy path (and any new branch) in the matching `internal/controller/*_unit_test.go`, using a `httptest.Server` to fake Polaris rather than requiring a live server. If the change touches something only a real API server would catch (CRD schema, status subresource, finalizer/deletion timing), add or extend the matching `*_controller_test.go` envtest spec too — see `polarisconnection_controller_test.go` for the established pattern (real parent chain seeded via `Create` + `Status().Update()`, fake Polaris backend via `BuildPolarisClient`).
 - **Bug fixes** — add a regression test in the same PR. "Reproduces the bug" → "fix" → "test passes" should be visible in the diff.
 
 ## API design conventions
@@ -95,7 +96,7 @@ These are project-specific rules that the kubebuilder defaults don't enforce. Th
 
 ## Updating the vendored Polaris OpenAPI specs
 
-The HTTP client (when written) is built around `openapi/*.yaml`, which pins to a specific Apache Polaris release. To bump:
+The HTTP client (`internal/polaris/`) is generated around `openapi/*.yaml`, which pins to a specific Apache Polaris release. To bump:
 
 ```sh
 # Replace VERSION with the target Polaris release tag (e.g. apache-polaris-1.5.0)
@@ -128,6 +129,14 @@ make manifests    # regenerate config/crd/bases/*.yaml
 ```
 
 Both are wired into `make test` and `make build`, so CI will fail if you forget. Commit the regenerated files alongside the type change.
+
+If the change affects RBAC, the manager, or a CRD (anything under `config/crd`, `config/rbac`, or `config/manager`), also regenerate the Helm chart and installer bundle so they don't drift from `config/`:
+
+```sh
+kubebuilder edit --plugins=helm/v2-alpha   # regenerates dist/chart/ and dist/install.yaml from config/
+```
+
+Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rule as `zz_generated.deepcopy.go`.
 
 ## Code style
 
