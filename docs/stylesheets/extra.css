@@ -1,0 +1,11 @@
+/* Material's default table CSS lets `code` spans break mid-word so a long
+   URL or path doesn't overflow a narrow column. That's wrong for CRD kind
+   names (PolarisPrincipalRoleBinding, etc.): there's no good place to break
+   a CamelCase identifier, so it gets chopped arbitrarily. Keep those on one
+   line instead; Material already wraps tables in a horizontally-scrolling
+   container for the rare case where a column genuinely can't fit. */
+.md-typeset table code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}

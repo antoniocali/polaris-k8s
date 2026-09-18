@@ -2,6 +2,9 @@ site_name: polaris-k8s
 site_description: A Kubernetes operator that manages Apache Polaris as Infrastructure-as-Code
 site_url: https://calific.io/polaris-k8s/
 repo_url: https://github.com/antoniocali/polaris-k8s
+
+extra_css:
+  - stylesheets/extra.css
 repo_name: antoniocali/polaris-k8s
 edit_uri: edit/main/docs/
 
