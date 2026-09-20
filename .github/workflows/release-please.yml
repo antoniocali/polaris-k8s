@@ -1,8 +1,7 @@
 # Maintains a standing "Release vX.Y.Z" PR from Conventional Commits on
 # main. Merging that PR is what actually creates the tag and the GitHub
 # Release (which in turn triggers release.yml). See CONTRIBUTING.md for the
-# commit message convention this depends on and RELEASING.md for the
-# end-to-end release process.
+# commit message convention this depends on.
 name: release-please
 
 on:

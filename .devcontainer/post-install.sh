@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "===================================="
-echo "Kubebuilder DevContainer Setup"
+echo "polaris-k8s DevContainer Setup"
 echo "===================================="
 
 # Verify running as root (required for installing to /usr/local/bin and /etc)
@@ -108,6 +108,28 @@ if command -v docker &> /dev/null; then
   fi
 fi
 
+# Install Helm
+if ! command -v helm &> /dev/null; then
+  echo "Installing Helm..."
+  curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4 | bash
+  echo "Helm installed successfully"
+fi
+
+if command -v helm &> /dev/null; then
+  if helm completion bash > "${BASH_COMPLETIONS_DIR}/helm" 2>/dev/null; then
+    echo "helm completion installed"
+  else
+    echo "WARNING: Failed to generate helm completion"
+  fi
+fi
+
+# Install Tilt, used by the local-dev harness (hack/local-dev/)
+if ! command -v tilt &> /dev/null; then
+  echo "Installing Tilt..."
+  curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+  echo "Tilt installed successfully"
+fi
+
 echo ""
 echo "------------------------------------"
 echo "Configuring Docker environment..."
@@ -142,6 +164,8 @@ echo "------------------------------------"
 kind version
 kubebuilder version
 kubectl version --client
+helm version
+tilt version
 docker --version
 go version
 
@@ -150,4 +174,5 @@ echo "===================================="
 echo "DevContainer ready!"
 echo "===================================="
 echo "All development tools installed successfully."
-echo "You can now start building Kubernetes operators."
+echo "Run 'make local-up' to bring up kind + Apache Polaris + the operator + sample CRs (Tilt UI at :10350)."
+echo "See CONTRIBUTING.md for the rest of the dev workflow."
