@@ -10,7 +10,7 @@
 
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects. You manage your Iceberg catalog the same way you manage everything else, with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
 
-> **Status: alpha.** All 12 reconcilers are implemented, unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. Install via kustomize or Helm; see [Getting started](https://calific.io/polaris-k8s/getting-started/). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).
+> **Status: alpha.** The CRD API is `polaris.k8s.calific.io/v1alpha1`: there's no conversion webhook yet, so a future release could still need a breaking schema change. All 12 reconcilers are implemented, unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. What's still genuinely missing: a `spec.deletionPolicy` field, so deleting a CR always cascades to the Polaris-side object today, with no way to orphan it instead. Install via kustomize or Helm; see [Getting started](https://calific.io/polaris-k8s/getting-started/).
 
 ## Why
 
@@ -55,10 +55,6 @@ PolarisConnection ──┬─► PolarisCatalog ──┬─► PolarisNamespac
 
 Bindings: Principal ─► PrincipalRole ─► CatalogRole
 ```
-
-### Out of scope (today)
-
-- Schema/partition drift on `PolarisTable` and SQL drift on `PolarisView`. Initial create works; mutating those fields needs drop+recreate for now.
 
 ## Quick example
 

@@ -78,4 +78,4 @@ spec:
 ```
 
 !!! warning "Schema/partition drift isn't reconciled"
-    Initial create is full-fidelity, but changes to `spec.schema` or `spec.partitionSpec` on an existing table aren't detected or applied. That requires the Iceberg `CommitTable` machinery, which isn't implemented yet. Changing a table's schema today means dropping and recreating the CR. See [Why](../index.md) for why this project leans away from managing ongoing schema evolution this way in the first place.
+    Initial create is full-fidelity, but changes to `spec.schema` or `spec.partitionSpec` on an existing table aren't detected or applied. That would require the Iceberg `CommitTable` machinery, which this project deliberately doesn't build. Changing a table's schema means dropping and recreating the CR. See [Why](../index.md) for the reasoning: this project leans away from managing ongoing schema evolution this way in the first place.
