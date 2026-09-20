@@ -1,6 +1,10 @@
 # Helm chart
 
-The chart lives at [`dist/chart/`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart) and installs the CRDs and the controller together, in one release. It's generated from `config/` via kubebuilder's `helm/v2-alpha` plugin. Never hand-edit anything under `dist/chart/`, except `Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation, which the release process manages. Regenerate the rest with `kubebuilder edit --plugins=helm/v2-alpha` after changing `config/crd`, `config/rbac`, or `config/manager`, the same way you'd regenerate `zz_generated.deepcopy.go`.
+The chart lives at [`dist/chart/`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart) and installs the CRDs and the controller together, in one release.
+
+- It's generated from `config/` via kubebuilder's `helm/v2-alpha` plugin.
+- Don't hand-edit files under `dist/chart/`. The one exception is `Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation, which the release process manages.
+- Regenerate everything else with `kubebuilder edit --plugins=helm/v2-alpha` after changing `config/crd`, `config/rbac`, or `config/manager`, the same way you'd regenerate `zz_generated.deepcopy.go`.
 
 ## Install
 
