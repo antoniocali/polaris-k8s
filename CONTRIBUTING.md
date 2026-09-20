@@ -26,6 +26,8 @@ go test ./api/... -count=1             # fast sanity check
 make test                              # full test suite (downloads envtest binaries on first run)
 ```
 
+VS Code / GitHub Codespaces users can skip local tool installation entirely: opening the repo with the Dev Containers extension (or in a Codespace) provisions Go, `kind`, `kubebuilder`, `kubectl`, `helm`, and `tilt` automatically, see [`.devcontainer/`](.devcontainer/).
+
 ## Local development (Tilt + kind + Polaris)
 
 For anything beyond pure API/CRD work — writing or changing reconcilers, or just
