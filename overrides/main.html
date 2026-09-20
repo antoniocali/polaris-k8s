@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {% set social_title = page.title ~ " - " ~ config.site_name if page and page.title else config.site_name %}
+  {% set social_description = config.site_description %}
+  {% set social_image = "https://opengraph.githubassets.com/1/antoniocali/polaris-k8s" %}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ social_title }}">
+  <meta property="og:description" content="{{ social_description }}">
+  <meta property="og:url" content="{{ config.site_url }}{{ page.url }}">
+  <meta property="og:image" content="{{ social_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ social_title }}">
+  <meta name="twitter:description" content="{{ social_description }}">
+  <meta name="twitter:image" content="{{ social_image }}">
+{% endblock %}
