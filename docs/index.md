@@ -22,10 +22,10 @@ That doesn't fit a GitOps workflow. There's no review step before a new principa
 
 It's also worth being honest about scope. Connections, catalogs, namespaces, principals, roles, bindings, and grants map cleanly onto infrastructure a platform team manages through GitOps. They change rarely, and they genuinely benefit from PR review.
 
-Tables and views are a weaker fit for ongoing schema management. In practice, table schemas evolve through the data engine itself, through Spark DDL or dbt migrations, not through a platform team's GitOps loop. That's also why schema and partition drift on tables, and SQL drift on views, aren't reconciled today: the initial create is full-fidelity, but further changes need a manual drop and recreate. Tables and views are most useful for bootstrapping a namespace's expected structure, not for driving its day-to-day evolution.
+Tables and views are a weaker fit for ongoing schema management. In practice, table schemas evolve through the data engine itself, through Spark DDL or dbt migrations, not through a platform team's GitOps loop. That's also why schema and partition drift on tables, and SQL drift on views, aren't reconciled: the initial create is full-fidelity, but further changes need a manual drop and recreate. Tables and views are most useful for bootstrapping a namespace's expected structure, not for driving its day-to-day evolution.
 
 ## Status
 
-**Alpha.** All 12 reconcilers are implemented. They're unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. The API is still `v1alpha1`. It may change without a conversion webhook, so pin to a release tag in production.
+**Alpha.** All 12 reconcilers are implemented. They're unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. The API is still `v1alpha1`. It may change without a conversion webhook, so pin to a release tag in production. One concrete gap: there's no `spec.deletionPolicy` field yet, so deleting a CR always cascades to the Polaris-side object, with no way to orphan it instead.
 
 Ready to try it? Head to [Getting started](getting-started.md), or jump straight into the [Tutorial](tutorial.md) to see the whole object graph reconcile end to end.
