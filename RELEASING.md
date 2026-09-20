@@ -23,7 +23,7 @@ The CRD API version is intentionally not tied to the release tag. Standard Kuber
    - Bumps `dist/chart/Chart.yaml`'s `version` and `appVersion` to match, in the same PR.
 3. The tag push triggers `.github/workflows/release.yml`, which:
    - Builds and pushes the manager image to `ghcr.io/antoniocali/polaris-k8s:<version>` (and `:latest`).
-   - Packages the Helm chart and pushes it as an OCI artifact to `oci://ghcr.io/antoniocali/charts/polaris-k8s`.
+   - Packages the Helm chart and pushes it as an OCI artifact to `oci://ghcr.io/antoniocali/charts/polaris-k8s`, first patching the packaged copy's `manager.image.repository` from the source `values.yaml`'s placeholder (`controller`) to `ghcr.io/antoniocali/polaris-k8s`, so the published chart installs with no `--set` flags.
    - Appends the image tag, chart reference, and the Apache Polaris compatibility version to the GitHub Release notes.
 
 Nothing here is silent: every version bump is a PR a human reviews and merges. The only fully automatic parts are computing what the next version *should* be, and publishing artifacts once a tag exists.

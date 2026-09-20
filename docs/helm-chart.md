@@ -1,8 +1,21 @@
 # Helm chart
 
-The chart lives at [`dist/chart/`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart) and installs the CRDs and the controller together, in one release. It's generated from `config/` via kubebuilder's `helm/v2-alpha` plugin. Never hand-edit anything under `dist/chart/`. Regenerate it with `kubebuilder edit --plugins=helm/v2-alpha` after changing `config/crd`, `config/rbac`, or `config/manager`, the same way you'd regenerate `zz_generated.deepcopy.go`.
+The chart lives at [`dist/chart/`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart) and installs the CRDs and the controller together, in one release. It's generated from `config/` via kubebuilder's `helm/v2-alpha` plugin. Never hand-edit anything under `dist/chart/`, except `Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation, which the release process manages. Regenerate the rest with `kubebuilder edit --plugins=helm/v2-alpha` after changing `config/crd`, `config/rbac`, or `config/manager`, the same way you'd regenerate `zz_generated.deepcopy.go`.
 
 ## Install
+
+Every tagged release publishes the chart as an OCI artifact with the correct image repository and tag already baked in, so no `--set` flags are needed:
+
+```sh
+helm upgrade --install polaris-k8s oci://ghcr.io/antoniocali/charts/polaris-k8s \
+  --version <tag> \
+  --namespace polaris-k8s-system --create-namespace \
+  --wait
+```
+
+Pick a `<tag>` from the [releases page](https://github.com/antoniocali/polaris-k8s/releases). Chart version, image tag, and the [Apache Polaris](https://polaris.apache.org/) compatibility version always match for a given release; the compatibility note ships in that release's notes and in the chart's own `Chart.yaml` annotations.
+
+Installing from a local checkout instead, for a fork or a local change:
 
 ```sh
 helm upgrade --install polaris-k8s ./dist/chart \
@@ -37,7 +50,7 @@ The controller Deployment.
 |---|---|---|
 | `manager.enabled` | `true` | Set `false` to skip installing the manager Deployment entirely (CRDs/RBAC only). |
 | `manager.replicas` | `1` | Pod replica count. Leader election is always on (`--leader-elect`, via `manager.args`), so more than one replica is safe. |
-| `manager.image.repository` | `controller` | Image repository. Always set this; the default is a placeholder. |
+| `manager.image.repository` | `controller` in the chart source | Image repository. If you're installing from a local checkout, always set this; the default is a placeholder. The chart published to `oci://ghcr.io/antoniocali/charts/polaris-k8s` overrides it to `ghcr.io/antoniocali/polaris-k8s` at release time, so OCI installs need no override. |
 | `manager.image.tag` | *(unset)* | Image tag. Falls back to `Chart.appVersion` when unset. |
 | `manager.image.pullPolicy` | `IfNotPresent` | |
 | `manager.imagePullSecrets` | *(unset)* | List of `{name: ...}` for a private registry. |
@@ -98,10 +111,9 @@ The controller Deployment.
 ## Example: single-namespace RBAC with Prometheus scraping
 
 ```sh
-helm upgrade --install polaris-k8s ./dist/chart \
+helm upgrade --install polaris-k8s oci://ghcr.io/antoniocali/charts/polaris-k8s \
+  --version <tag> \
   --namespace polaris-k8s-system --create-namespace \
-  --set manager.image.repository=<registry>/polaris-k8s \
-  --set manager.image.tag=<tag> \
   --set rbac.namespaced=true \
   --set prometheus.enable=true \
   --wait

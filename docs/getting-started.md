@@ -42,29 +42,31 @@ You should see all 12 kinds. They share the `polaris` category, so `kubectl get 
 
 Two ways to do this. Same `config/` source underneath, pick whichever fits your workflow.
 
+Every tagged release publishes a ready-to-use manager image to `ghcr.io/antoniocali/polaris-k8s:<tag>`, so most installs need no image build step. Pick a tag from the [releases page](https://github.com/antoniocali/polaris-k8s/releases).
+
 **Kustomize**, the same tool step 1 already used to install the CRDs:
 
 ```sh
-make docker-build docker-push IMG=<registry>/polaris-k8s:<tag>
-make deploy IMG=<registry>/polaris-k8s:<tag>
+make deploy IMG=ghcr.io/antoniocali/polaris-k8s:<tag>
 ```
 
 This installs the manager plus its RBAC into the `polaris-k8s-system` namespace. To remove it, run `make undeploy`.
 
-**Helm** installs CRDs and the controller together in one command, and skips step 1 entirely:
+**Helm** installs CRDs and the controller together in one command, and skips step 1 entirely. The chart is published alongside the image, as an OCI artifact:
 
 ```sh
-make helm-deploy IMG=<registry>/polaris-k8s:<tag>
+helm upgrade --install polaris-k8s oci://ghcr.io/antoniocali/charts/polaris-k8s \
+  --version <tag> \
+  --namespace polaris-k8s-system --create-namespace \
+  --wait
 ```
 
-or directly:
+Building your own image instead, for a fork or a local change:
 
 ```sh
-helm upgrade --install polaris-k8s ./dist/chart \
-  --namespace polaris-k8s-system --create-namespace \
-  --set manager.image.repository=<registry>/polaris-k8s \
-  --set manager.image.tag=<tag> \
-  --wait
+make docker-build docker-push IMG=<registry>/polaris-k8s:<tag>
+make deploy IMG=<registry>/polaris-k8s:<tag>
+# or: make helm-deploy IMG=<registry>/polaris-k8s:<tag>
 ```
 
 See the [CRD reference](crds/index.md) for what to apply next either way, or the [Helm chart reference](helm-chart.md) for every configuration knob (RBAC scope, metrics, resource limits). Remove with `make helm-uninstall`.

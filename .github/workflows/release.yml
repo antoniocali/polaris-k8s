@@ -40,6 +40,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: azure/setup-helm@v4
+      - name: Point the packaged chart's default image at the one just published
+        # dist/chart/values.yaml ships with manager.image.repository: controller,
+        # a kubebuilder scaffold placeholder (see docs/helm-chart.md's values
+        # table). The source file stays that way, unset on purpose, so this
+        # only patches the copy that gets packaged and pushed, letting an OCI
+        # install with no --set flags pull the image this same tag just built.
+        run: |
+          curl -fsSL -o /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+          yq -i '.manager.image.repository = "ghcr.io/antoniocali/polaris-k8s"' dist/chart/values.yaml
       - run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
       - run: helm package dist/chart -d dist
       - run: helm push dist/polaris-k8s-*.tgz oci://ghcr.io/antoniocali/charts
