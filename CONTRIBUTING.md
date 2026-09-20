@@ -61,7 +61,7 @@ the FILE-storage caveats live in [`hack/local-dev/README.md`](hack/local-dev/REA
 
 - Branch from `main` using a descriptive name: `feat/polaris-connection-reconciler`, `fix/grant-cel-rule`, `docs/deployment-azure`.
 - One logical change per PR. If you find yourself writing "and also …" in the description, split it.
-- Commit messages: short imperative subject (≤72 chars), blank line, body explaining the *why*. We don't enforce Conventional Commits but the spirit applies.
+- Commit messages: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, and so on), short imperative subject (≤72 chars), blank line, body explaining the *why*. Release automation reads these prefixes to compute the next version, see [RELEASING.md](RELEASING.md).
 - Rebase on `main` before opening the PR; squash merges are the default.
 - PR description should answer: **what changed**, **why**, and **how it was tested**.
 
@@ -111,6 +111,7 @@ Also update:
 
 - `openapi/README.md` — the recorded version + date.
 - `README.md` — the "Apache Polaris (vendored spec)" row in the versioning table.
+- `dist/chart/Chart.yaml` — the `polaris-k8s.io/apache-polaris-version` annotation.
 
 If a bump changes the schema in ways the operator relies on, regenerate the client:
 
@@ -136,7 +137,7 @@ If the change affects RBAC, the manager, or a CRD (anything under `config/crd`, 
 kubebuilder edit --plugins=helm/v2-alpha   # regenerates dist/chart/ and dist/install.yaml from config/
 ```
 
-Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rule as `zz_generated.deepcopy.go`.
+Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rule as `zz_generated.deepcopy.go`. The one exception is `dist/chart/Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation: those aren't touched by the kubebuilder regeneration and are release-managed instead, see [RELEASING.md](RELEASING.md).
 
 ## Code style
 

@@ -14,7 +14,8 @@ This file orients Claude Code sessions running inside this repo.
   - Deletion cascades to the Polaris-side resource by default (no `spec.deletionPolicy` field yet).
   - Schema/partition spec drift on `PolarisTable` and SQL drift on `PolarisView` are **not** yet detected — initial create is full-fidelity, but updates to those fields require a manual drop+recreate. Properties drift on tables/views is also TODO (the Iceberg `CommitTable` machinery is the missing piece).
 - **Unit tests** for every reconciler live in `internal/controller/*_unit_test.go` using a fake kube client + an `httptest.Server` fake Polaris. **Envtest specs** in `internal/controller/*_controller_test.go` drive each reconciler against a real Kubernetes API server (real CRD schema, status subresource, finalizer semantics) with only the Polaris HTTP backend faked. **`test/e2e`** reconciles the full 12-kind object graph against a real Apache Polaris server running as a sibling Kind container.
-- **Two install paths, one source of truth.** `config/` is the kubebuilder source of truth for CRDs (`config/crd`) and RBAC (`config/rbac`); `make deploy IMG=...` / `kubectl apply -k config/…` is the plain-kustomize path. `dist/chart/` is a Helm chart generated from the same `config/` output via the `helm.kubebuilder.io/v2-alpha` plugin (`make helm-deploy IMG=...`, or `kubebuilder edit --plugins=helm/v2-alpha` to regenerate) — **never hand-edit files under `dist/chart/`**, they're regenerated the same way `zz_generated.deepcopy.go` is.
+- **Two install paths, one source of truth.** `config/` is the kubebuilder source of truth for CRDs (`config/crd`) and RBAC (`config/rbac`); `make deploy IMG=...` / `kubectl apply -k config/…` is the plain-kustomize path. `dist/chart/` is a Helm chart generated from the same `config/` output via the `helm.kubebuilder.io/v2-alpha` plugin (`make helm-deploy IMG=...`, or `kubebuilder edit --plugins=helm/v2-alpha` to regenerate) — **never hand-edit files under `dist/chart/`**, they're regenerated the same way `zz_generated.deepcopy.go` is, except `Chart.yaml`'s `version`/`appVersion`/`polaris-k8s.io/apache-polaris-version` annotation, which the release process owns (see `RELEASING.md`).
+- **Releases are automated but human-gated.** `release-please` (`.github/workflows/release-please.yml`) reads Conventional Commit prefixes on `main` and keeps a standing release PR up to date; merging it cuts the `vX.Y.Z` tag and bumps the Helm chart version in lockstep. The tag push triggers `.github/workflows/release.yml`, which publishes the manager image and the Helm chart (as an OCI artifact) to GHCR. Full detail in `RELEASING.md`.
 
 ## API conventions (read before editing types)
 
@@ -82,12 +83,15 @@ docs/                       # GitHub Pages documentation site (Zensical, a MkDoc
 test/e2e/                   # full 12-kind object graph against a real Apache Polaris (sibling Kind container)
 openapi/                    # vendored Apache Polaris OpenAPI specs (1.4.1) — bump procedure in CONTRIBUTING.md
 hack/                       # codegen configs + prepare-specs.sh (rewrites specs before oapi-codegen); hack/local-dev/ is the Tilt-driven dev harness
-.github/workflows/          # ci.yml (lint/test/build/e2e, path-filtered), docs.yml, test-chart.yml
+.github/workflows/          # ci.yml (lint/test/build/e2e, path-filtered), docs.yml, test-chart.yml, release-please.yml, release.yml
 cmd/main.go                 # manager entrypoint (kubebuilder default)
 Makefile                    # generate/manifests/build/test/docker/helm-* targets
 README.md                   # user-facing project overview + scope
 DEPLOYMENT.md               # install + sample CRs
 CONTRIBUTING.md             # PR process + API design conventions
+RELEASING.md                # tag/version scheme, release-please, GHCR publishing
+release-please-config.json  # release-please package + extra-files config
+.release-please-manifest.json  # release-please's current-version bookkeeping
 ```
 
 ## Hierarchy (mental model)

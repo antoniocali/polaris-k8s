@@ -106,6 +106,7 @@ dist/chart/        Helm chart, generated from config/ (regenerate with `kubebuil
 docs/              GitHub Pages documentation site (Zensical, config in mkdocs.yml)
 DEPLOYMENT.md      Install + sample CRs
 CONTRIBUTING.md    How to contribute
+RELEASING.md       How a merge to main becomes a tagged release and published artifacts
 CLAUDE.md          AI-agent-facing project conventions
 ```
 
@@ -120,6 +121,8 @@ CLAUDE.md          AI-agent-facing project conventions
 | Helm chart (`dist/chart`) | 0.1.0 |
 
 Until a `v1beta1` is published, the API may change without a conversion webhook. Pin to a release tag in production.
+
+Releases are tagged `vX.Y.Z` and published automatically once merged; see [RELEASING.md](RELEASING.md) for the full process, including how the Helm chart version and the Apache Polaris compatibility note stay in sync with each tag. Images: `ghcr.io/antoniocali/polaris-k8s`. Helm chart: `oci://ghcr.io/antoniocali/charts/polaris-k8s`.
 
 ## Contributing
 

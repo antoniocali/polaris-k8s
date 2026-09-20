@@ -50,16 +50,16 @@ returns every CR in the cluster.
 
 ## 2. Deploy the controller
 
-The manager must reach both the Kubernetes API and your Polaris server. Build and push the image:
+The manager must reach both the Kubernetes API and your Polaris server. Tagged releases publish a ready-to-use image to `ghcr.io/antoniocali/polaris-k8s:<tag>` (see [RELEASING.md](RELEASING.md)), so most installs can skip straight to deploying:
+
+```sh
+make deploy IMG=ghcr.io/antoniocali/polaris-k8s:<tag>
+```
+
+To build and push your own image instead, for a fork or a local change:
 
 ```sh
 make docker-build docker-push IMG=<registry>/polaris-k8s:<tag>
-```
-
-Deploy the manager + RBAC into the cluster (default install namespace: `polaris-k8s-system`):
-
-```sh
-make deploy IMG=<registry>/polaris-k8s:<tag>
 ```
 
 Tear down:
@@ -70,7 +70,16 @@ make undeploy
 
 ## Installing via Helm
 
-Installs CRDs and the controller together, in one command, from the chart under [`dist/chart`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart):
+Tagged releases publish the chart as an OCI artifact to `oci://ghcr.io/antoniocali/charts/polaris-k8s` (see [RELEASING.md](RELEASING.md)):
+
+```sh
+helm upgrade --install polaris-k8s oci://ghcr.io/antoniocali/charts/polaris-k8s \
+  --version <tag> \
+  --namespace polaris-k8s-system --create-namespace \
+  --wait
+```
+
+Or from a local checkout, from the chart under [`dist/chart`](https://github.com/antoniocali/polaris-k8s/tree/main/dist/chart):
 
 ```sh
 helm upgrade --install polaris-k8s ./dist/chart \

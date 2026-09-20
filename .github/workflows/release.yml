@@ -1,0 +1,79 @@
+# Publishes release artifacts when a vX.Y.Z tag lands (created by
+# release-please, or pushed manually for a one-off release). Builds and
+# pushes the manager image and the packaged Helm chart to GHCR, then
+# appends the Apache Polaris compatibility line to the GitHub Release notes
+# release-please already created.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: version
+        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/antoniocali/polaris-k8s:${{ steps.version.outputs.tag }}
+            ghcr.io/antoniocali/polaris-k8s:latest
+
+  chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v4
+      - name: Point the packaged chart's default image at the one just published
+        # dist/chart/values.yaml ships with manager.image.repository: controller,
+        # a kubebuilder scaffold placeholder (see docs/helm-chart.md's values
+        # table). The source file stays that way, unset on purpose, so this
+        # only patches the copy that gets packaged and pushed, letting an OCI
+        # install with no --set flags pull the image this same tag just built.
+        run: |
+          curl -fsSL -o /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          chmod +x /usr/local/bin/yq
+          yq -i '.manager.image.repository = "ghcr.io/antoniocali/polaris-k8s"' dist/chart/values.yaml
+      - run: helm registry login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+      - run: helm package dist/chart -d dist
+      - run: helm push dist/polaris-k8s-*.tgz oci://ghcr.io/antoniocali/charts
+
+  release-notes:
+    needs: [image, chart]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Append artifact links and Apache Polaris compatibility
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          polaris_version="$(grep -m1 '^- \*\*Apache Polaris\*\*' openapi/README.md | sed -E 's/.*`([^`]+)`.*/\1/')"
+          body="$(gh release view "$GITHUB_REF_NAME" --json body -q .body)"
+          {
+            printf '%s\n\n' "$body"
+            echo "## Artifacts"
+            echo ""
+            echo "- Image: \`ghcr.io/antoniocali/polaris-k8s:${tag}\`"
+            echo "- Helm chart: \`oci://ghcr.io/antoniocali/charts/polaris-k8s\`, version \`${tag}\`"
+            echo "- Built against Apache Polaris \`${polaris_version}\`"
+          } > /tmp/release-body.md
+          gh release edit "$GITHUB_REF_NAME" --notes-file /tmp/release-body.md --repo "$GITHUB_REPOSITORY"
