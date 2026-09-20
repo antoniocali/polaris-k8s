@@ -13,4 +13,4 @@
 
 - [ ] One logical change (see [CONTRIBUTING.md](../CONTRIBUTING.md))
 - [ ] New/changed behavior has test coverage
-- [ ] Docs updated (`README.md`, `DEPLOYMENT.md`, `CLAUDE.md`) if applicable
+- [ ] Docs updated (`README.md`, `docs/`, `CLAUDE.md`) if applicable

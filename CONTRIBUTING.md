@@ -63,7 +63,7 @@ the FILE-storage caveats live in [`hack/local-dev/README.md`](hack/local-dev/REA
 
 - Branch from `main` using a descriptive name: `feat/polaris-connection-reconciler`, `fix/grant-cel-rule`, `docs/deployment-azure`.
 - One logical change per PR. If you find yourself writing "and also …" in the description, split it.
-- Commit messages: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, and so on), short imperative subject (≤72 chars), blank line, body explaining the *why*. Release automation reads these prefixes to compute the next version, see [RELEASING.md](RELEASING.md).
+- Commit messages: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, and so on), short imperative subject (≤72 chars), blank line, body explaining the *why*. `release-please` reads these prefixes to compute the next version (see `.github/workflows/release-please.yml`).
 - Rebase on `main` before opening the PR; squash merges are the default.
 - PR description should answer: **what changed**, **why**, and **how it was tested**.
 
@@ -139,7 +139,7 @@ If the change affects RBAC, the manager, or a CRD (anything under `config/crd`, 
 kubebuilder edit --plugins=helm/v2-alpha   # regenerates dist/chart/ and dist/install.yaml from config/
 ```
 
-Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rule as `zz_generated.deepcopy.go`. The one exception is `dist/chart/Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation: those aren't touched by the kubebuilder regeneration and are release-managed instead, see [RELEASING.md](RELEASING.md).
+Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rule as `zz_generated.deepcopy.go`. The one exception is `dist/chart/Chart.yaml`'s `version`, `appVersion`, and the `polaris-k8s.io/apache-polaris-version` annotation: those aren't touched by the kubebuilder regeneration and are bumped by `release-please` instead (`.github/workflows/release.yml` publishes the result), see `docs/helm-chart.md`'s Versioning section for how those relate to the release tag.
 
 ## Code style
 
@@ -149,7 +149,7 @@ Never hand-edit anything under `dist/chart/` or `dist/install.yaml` — same rul
 
 ## Reporting security issues
 
-See [SECURITY.md](SECURITY.md) — don't open a public GitHub Issue for security problems.
+Don't open a public GitHub Issue for security problems. Use GitHub's [private vulnerability reporting](https://github.com/antoniocali/polaris-k8s/security/advisories/new) instead, or email antoniodavidecali@gmail.com. This project is early-stage and has no formal security policy yet.
 
 ## License
 

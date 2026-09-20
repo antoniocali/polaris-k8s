@@ -40,6 +40,19 @@ make helm-rollback     # helm rollback
 make helm-uninstall    # helm uninstall
 ```
 
+## Versioning
+
+Four things look like "the version" here but move independently.
+
+| Axis | Where it lives | Moves when |
+|------|-----------------|------------|
+| Release | git tag `vX.Y.Z`, GitHub Release | A new version ships |
+| CRD API | `polaris.k8s.calific.io/v1alpha1` | A deliberate, rare API promotion (`v1alpha1` to `v1beta1`) |
+| Helm chart | `Chart.yaml` `version` / `appVersion` | Kept equal to the release tag |
+| Apache Polaris compatibility | `Chart.yaml`'s `polaris-k8s.io/apache-polaris-version` annotation, and the release notes | An OpenAPI spec bump |
+
+The CRD API version is intentionally not tied to the release tag; that's standard Kubernetes convention, and many releases can ship while the API stays `v1alpha1`. The chart version, by contrast, is kept equal to the release tag, since this is a single-app, single-chart repository and a separate chart version number would only add confusion.
+
 ## Values reference
 
 ### `manager`

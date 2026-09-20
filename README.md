@@ -10,7 +10,7 @@
 
 Polaris exposes catalogs, namespaces, tables, principals, roles, and grants through a REST API. `polaris-k8s` makes those same resources declarative Kubernetes objects. You manage your Iceberg catalog the same way you manage everything else, with `kubectl apply`, GitOps, and pull requests instead of ad-hoc API calls.
 
-> **Status: alpha.** All 12 reconcilers are implemented, unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. Install via kustomize or Helm; see [DEPLOYMENT.md](DEPLOYMENT.md). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).
+> **Status: alpha.** All 12 reconcilers are implemented, unit-tested against a fake Polaris server, covered by an envtest suite against a real Kubernetes API server, and proven end to end against a real Apache Polaris instance. Install via kustomize or Helm; see [Getting started](https://calific.io/polaris-k8s/getting-started/). Schema/partition drift on tables and SQL drift on views aren't reconciled today (initial create is full-fidelity; further changes require drop+recreate).
 
 ## Why
 
@@ -89,7 +89,7 @@ spec:
       region: eu-west-1
 ```
 
-Full installation and end-to-end examples (namespaces, principals, grants) are in [DEPLOYMENT.md](DEPLOYMENT.md).
+Full installation and end-to-end examples (namespaces, principals, grants) are in the [Getting started](https://calific.io/polaris-k8s/getting-started/) and [Tutorial](https://calific.io/polaris-k8s/tutorial/) docs.
 
 **Try it on your laptop.** `hack/local-dev/up.sh` spins up kind, a real Apache Polaris, the operator, and sample CRs with one command (Tilt-driven, no cloud storage needed). See [hack/local-dev/README.md](hack/local-dev/README.md).
 
@@ -103,10 +103,8 @@ internal/polaris/  Polaris HTTP client: facade plus generated sub-clients (manag
 openapi/           Vendored Apache Polaris 1.4.1 OpenAPI specs (the HTTP client is generated from these)
 cmd/main.go        Manager entrypoint
 dist/chart/        Helm chart, generated from config/ (regenerate with `kubebuilder edit --plugins=helm/v2-alpha`)
-docs/              GitHub Pages documentation site (Zensical, config in mkdocs.yml)
-DEPLOYMENT.md      Install + sample CRs
+docs/              GitHub Pages documentation site (Zensical, config in mkdocs.yml) — install steps, tutorial, CRD reference, and the Helm chart guide all live here
 CONTRIBUTING.md    How to contribute
-RELEASING.md       How a merge to main becomes a tagged release and published artifacts
 CLAUDE.md          AI-agent-facing project conventions
 ```
 
@@ -122,7 +120,7 @@ CLAUDE.md          AI-agent-facing project conventions
 
 Until a `v1beta1` is published, the API may change without a conversion webhook. Pin to a release tag in production.
 
-Releases are tagged `vX.Y.Z` and published automatically once merged; see [RELEASING.md](RELEASING.md) for the full process, including how the Helm chart version and the Apache Polaris compatibility note stay in sync with each tag. Images: `ghcr.io/antoniocali/polaris-k8s`. Helm chart: `oci://ghcr.io/antoniocali/charts/polaris-k8s`.
+Releases are tagged `vX.Y.Z` and published automatically once merged; see the [Helm chart](https://calific.io/polaris-k8s/helm-chart/#versioning) docs for how the release tag, the Helm chart version, and the Apache Polaris compatibility note stay in sync. Images: `ghcr.io/antoniocali/polaris-k8s`. Helm chart: `oci://ghcr.io/antoniocali/charts/polaris-k8s`.
 
 ## Contributing
 
