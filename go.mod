@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/oapi-codegen/runtime v1.7.0
-	github.com/onsi/ginkgo/v2 v2.32.2
+	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
 	k8s.io/api v0.37.0
 	k8s.io/apiextensions-apiserver v0.37.0
