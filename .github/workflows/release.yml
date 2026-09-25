@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
       - name: Point the packaged chart's default image at the one just published
         # dist/chart/values.yaml ships with manager.image.repository: controller,
         # a kubebuilder scaffold placeholder (see docs/helm-chart.md's values
