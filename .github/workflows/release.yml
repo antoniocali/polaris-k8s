@@ -18,7 +18,7 @@ jobs:
   image:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
@@ -38,7 +38,7 @@ jobs:
   chart:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: azure/setup-helm@v5
       - name: Point the packaged chart's default image at the one just published
         # dist/chart/values.yaml ships with manager.image.repository: controller,
@@ -59,7 +59,7 @@ jobs:
     needs: [image, chart]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Append artifact links and Apache Polaris compatibility
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
