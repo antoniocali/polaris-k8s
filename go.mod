@@ -3,7 +3,7 @@ module github.com/antoniocali/polaris-k8s
 go 1.26.0
 
 require (
-	github.com/oapi-codegen/runtime v1.7.0
+	github.com/oapi-codegen/runtime v1.8.0
 	github.com/onsi/ginkgo/v2 v2.33.0
 	github.com/onsi/gomega v1.43.1
 	k8s.io/api v0.37.1
